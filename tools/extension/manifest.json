@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "Nova Act Annotator",
+  "version": "3.1.0",
+  "description": "Annotate any web page with element inspection, freehand drawing, and pin notes. Exports structured feedback for coding agents.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "downloads",
+    "storage"
+  ],
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_popup": "popup.html"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["utils.js", "shapes.js", "note-composer.js", "inspector.js", "export-checklist.js", "copy-prompt-handoff.js", "content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["fonts/*", "icons/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}

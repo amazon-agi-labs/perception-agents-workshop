@@ -1,0 +1,12 @@
+{
+  "name": "@amzn/nova-act-annotator-extension",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "test": "jest --env=jsdom"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "compiled_at": "2026-06-23T03:35:00Z",
+  "design_md": {
+    "path": "visual/design.md",
+    "hash": "61f0d69d3372652848d51b63251c0570"
+  },
+  "categories": {
+    "visual-style": {
+      "path": ".ui-verification/specs/visual-style.md",
+      "hash": "823dd9fee951b563f9551181fd8c03b5"
+    },
+    "component-rules": {
+      "path": ".ui-verification/specs/component-rules.md",
+      "hash": "d7e0aeae032cf16977e13577f9f47c88"
+    },
+    "accessibility": {
+      "path": ".ui-verification/specs/accessibility.md",
+      "hash": "80dadfe3a8face3101ea42768bfa1adc"
+    },
+    "project-rules": {
+      "path": ".ui-verification/specs/project-rules.md",
+      "hash": "5bdeaa8c32313fa1b5caa54f97b3a308"
+    },
+    "platform-conventions": {
+      "path": ".ui-verification/specs/platform-conventions.md",
+      "hash": "87ff3902593a188859cf02034969ab80"
+    }
+  }
+}

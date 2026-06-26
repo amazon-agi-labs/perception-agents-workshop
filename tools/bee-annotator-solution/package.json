@@ -1,0 +1,9 @@
+{
+  "name": "bee-conversation-annotator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Reverse proxy that listens for completed Bee conversations and surfaces design-related feedback as sidebar cards with Apply/Dismiss actions.",
+  "scripts": {
+    "start": "node proxy-worker.js --target http://localhost:5173 --port 9997 --feedback ../../thinking-cap-podcast-app/.tmp/bee-conv-feedback.json --inspector-script ./inspector.js --app-dir ../../thinking-cap-podcast-app"
+  }
+}
