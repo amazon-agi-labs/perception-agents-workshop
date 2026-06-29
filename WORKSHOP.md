@@ -430,7 +430,10 @@ What if you didn't need to click and type to annotate at all? [Bee](https://bee.
 #### Prerequisites
 
 1. **Install Bee CLI** from [https://github.com/bee-computer/bee-cli](https://github.com/bee-computer/bee-cli)
-2. **Authenticate**: run `bee login` and follow the prompts
+2. **Authenticate**: run `bee login` and follow the prompts. For the workshop, you can use the shared test account:
+   ```bash
+   bee login --token eyJhbGciOiJFZERTQSJ9.eyJzdWIiOiI0NjMwOCIsInNpZCI6InQ1ZHp3ZXl0b2lhcTI0OXMzZjFxeHIzaSIsImFwcElkIjoid21tZzJvbmF4MGhwZ2JkcngydXdvamZlIiwic2VjcmV0IjoibmdWNElBY1h4QlRWcjRRUFlyMXhrTmpsenBNNEtQVFd5cmxtc01tTGVsZz0iLCJwcm9vZiI6IjlRbDBtVTVoTElnbGF6OEJ0QlBxYm1wZ0I3bi9RRXU4TFJIRWNWU2Z0T3c9IiwiaWF0IjoxNzgyNjY2ODcwLCJuYmYiOjE3ODI2NjY4NzAsImlzcyI6ImFwcC1kZXZlbG9wZXItYXBwIiwianRpIjoiZjRlNzhkNzQtODE1Yy00MWYyLTkwNWYtMDFmYTI2NzEwNWZlIn0.1MHduljlSnPFiEuHplAR31dR9xpCGpQxX6U5t2Er6gh-PCeBM-1HUgd7UG8R29noYSTSRnlki0NFBW_CbMCiCg
+   ```
 3. **Verify**: run `bee status` (should show your account connected)
 4. Ensure `claude` or `kiro-cli` is on your PATH (same as main challenge)
 
