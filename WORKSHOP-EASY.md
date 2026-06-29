@@ -32,6 +32,7 @@ The agent bridge is already built for you at `tools/agent-bridge/agent-bridge.js
 1. Extension POSTs annotations to the bridge at `/api/apply`
 2. Bridge builds a prompt and shells out to the AI CLI:
   ```bash
+  # DON'T RUN THIS! THIS IS JUST ILLUSTRATIVE SAMPLE CODE
   # Kiro
    kiro-cli chat -a --no-interactive --effort max "$(cat .tmp/apply-prompt.txt)"
   # Claude
@@ -41,6 +42,7 @@ The agent bridge is already built for you at `tools/agent-bridge/agent-bridge.js
 4. Bridge polls the dev server to confirm it's responding
 5. Bridge runs verification:
    ```bash
+   # DON'T RUN THIS! THIS IS JUST ILLUSTRATIVE SAMPLE CODE
    python3 tools/agent-bridge/verify-with-nova-act.py --app-dir some-podcast-app --url http://localhost:5173
    ```
 6. Bridge writes `{status: "done", reportPath: "..."}` to a status file
