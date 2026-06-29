@@ -89,6 +89,12 @@ source .venv/bin/activate
 pip install -r tools/agent-bridge/requirements.txt
 ```
 
+Then install the agent bridge's Node dependencies (used to render the verification report):
+
+```bash
+npm install --prefix tools/agent-bridge
+```
+
 
 ### 3. Install Nova Act MCP server and UI Verification skills
 
