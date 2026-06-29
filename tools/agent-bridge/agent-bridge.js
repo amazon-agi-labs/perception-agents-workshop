@@ -18,12 +18,12 @@
 
 // Agent Bridge: connects the Chrome extension to the AI coding agent.
 // This HTTP server acts as middleware between a browser extension (which collects
-// user annotations/feedback on a live web page) and an AI CLI tool (claude-code or
-// kiro-cli) that applies code changes based on those annotations.
+// user annotations/feedback on a live web page) and an AI CLI tool (claude-code,
+// kiro-cli, or Cursor headless agent) that applies code changes based on those annotations.
 //
 // Flow: Browser Extension → HTTP POST → Agent Bridge → AI CLI → Code Changes → Verification
 //
-// CLI-agnostic — works with claude-code, kiro-cli, or any CLI that accepts a prompt.
+// CLI-agnostic — works with claude-code, kiro-cli, Cursor agent CLI, or any CLI that accepts a prompt.
 // Args: --port PORT --feedback PATH --app-dir PATH --cli CMD
 
 const http = require('http');
@@ -51,7 +51,7 @@ for (let i = 0; i < args.length; i++) {
   if (args[i] === '--port' && args[i + 1]) port = parseInt(args[++i]);       // HTTP server port
   if (args[i] === '--feedback' && args[i + 1]) feedbackPath = args[++i];     // JSON file to persist annotations
   if (args[i] === '--app-dir' && args[i + 1]) appDir = args[++i];           // Workspace root for the target app
-  if (args[i] === '--cli' && args[i + 1]) cliCmd = args[++i];               // AI CLI binary (claude or kiro-cli)
+  if (args[i] === '--cli' && args[i + 1]) cliCmd = args[++i];               // AI CLI binary (claude, kiro-cli, cursor, agent)
 }
 
 if (!port || !feedbackPath) {
@@ -61,15 +61,34 @@ Options:
   --port              Port for the agent bridge (required)
   --feedback          Path to store annotation feedback JSON (required)
   --app-dir           Your app's workspace root
-  --cli               AI CLI command (default: kiro-cli, pass "claude" for Claude Code)
+  --cli               AI CLI command (default: kiro-cli; pass "claude", "cursor", or "agent" for other agents)
 `);
   process.exit(1);
 }
 
+// True when the resolved CLI is Cursor's headless agent executable.
+function isCursorCli(cli) {
+  if (!cli) return false;
+  if (cli === 'cursor') return true;
+  return path.basename(String(cli)) === 'agent';
+}
+
+// Resolve --cli cursor / --cli agent to the agent binary on PATH.
+function resolveCursorCli(requested) {
+  const { execSync } = require('child_process');
+  if (requested && requested !== 'cursor' && requested !== 'agent') return requested;
+  try { execSync('which agent', { stdio: 'ignore' }); return 'agent'; } catch (_) {}
+  process.stderr.write('[agent-bridge] WARNING: Cursor CLI "agent" not found on PATH. Verify with: which agent\n');
+  return 'agent';
+}
+
 // Auto-detect which AI CLI is available on the system.
-// Priority: user-specified --cli flag > kiro-cli on PATH > kiro-cli in ~/.local/bin > claude
+// Priority: user-specified --cli flag > kiro-cli on PATH > kiro-cli in ~/.local/bin > claude > agent
 function detectCli() {
   if (cliCmd) {
+    if (cliCmd === 'cursor' || cliCmd === 'agent') {
+      return resolveCursorCli(cliCmd);
+    }
     // If user passed 'kiro-cli' or 'kiro', resolve to full path if needed
     if (cliCmd.includes('kiro') && !cliCmd.startsWith('/')) {
       const kiroPaths = [(process.env.HOME || '') + '/.local/bin/kiro-cli'];
@@ -85,14 +104,26 @@ function detectCli() {
   if (fs.existsSync(kiroPath)) return kiroPath;
   // Fall back to claude
   try { execSync('which claude', { stdio: 'ignore' }); return 'claude'; } catch (_) {}
-  process.stderr.write('[agent-bridge] WARNING: No AI CLI detected. Install kiro-cli or claude-code.\n');
+  // Fall back to Cursor headless agent
+  try { execSync('which agent', { stdio: 'ignore' }); return 'agent'; } catch (_) {}
+  process.stderr.write('[agent-bridge] WARNING: No AI CLI detected. Install kiro-cli, claude-code, or Cursor agent CLI.\n');
   return 'kiro-cli';
+}
+
+// Optional --workspace flag for Cursor agent CLI (scopes edits to --app-dir).
+function cursorWorkspaceFlag(workspace) {
+  if (!workspace) return '';
+  return ` --workspace '${path.resolve(workspace)}'`;
 }
 
 // Build the shell command to invoke the AI CLI for code-editing tasks (apply annotations).
 // Each CLI has different flags for non-interactive mode and prompt input.
-function buildCliCommand(cli, promptFile, effort) {
+function buildCliCommand(cli, promptFile, effort, workspace) {
   var file = path.resolve(promptFile);
+  if (isCursorCli(cli)) {
+    // -p: non-interactive; --force: apply file edits without confirmation
+    return `cat '${file}' | ${cli} -p --force${cursorWorkspaceFlag(workspace)}`;
+  }
   if (cli.includes('claude')) {
     // Pipe file content to avoid shell quoting issues with JSON in the prompt
     return `cat '${file}' | ${cli} --dangerously-skip-permissions -p`;
@@ -105,8 +136,12 @@ function buildCliCommand(cli, promptFile, effort) {
 
 // Build the shell command for lightweight chat queries (no file editing, lower effort).
 // Used by the /api/chat endpoint for quick CSS design questions.
-function buildChatCommand(cli, promptFile) {
+function buildChatCommand(cli, promptFile, workspace) {
   var file = path.resolve(promptFile);
+  if (isCursorCli(cli)) {
+    // -p without --force: answer only, no direct file edits
+    return `cat '${file}' | ${cli} -p${cursorWorkspaceFlag(workspace)}`;
+  }
   if (cli.includes('claude')) {
     return `cat '${file}' | ${cli} -p`;
   }
@@ -136,7 +171,8 @@ const CLI = detectCli();
 // Ensure common binary locations are on PATH when spawning child processes
 const EXEC_ENV = Object.assign({}, process.env, { PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:' + (process.env.HOME || '') + '/.local/bin' });
 
-process.stderr.write(`[agent-bridge] Using CLI: ${CLI}\n`);
+const cliLabel = isCursorCli(CLI) ? `Cursor agent (${CLI})` : CLI;
+process.stderr.write(`[agent-bridge] Using CLI: ${cliLabel}\n`);
 
 // Structured logger — writes timestamped messages to stderr with a category tag
 function log(tag, msg) {
@@ -243,9 +279,10 @@ const server = http.createServer((req, res) => {
           fs.writeFileSync(promptFile, prompt);
           // Write prompt to a temp file, invoke the CLI, then clean up
           const { exec } = require('child_process');
-          const cmd = buildChatCommand(CLI, promptFile);
+          const chatCwd = appDir || process.cwd();
+          const cmd = buildChatCommand(CLI, promptFile, chatCwd);
           log('chat', `Invoking CLI: ${cmd.slice(0, 120)}...`);
-          exec(cmd, { timeout: 90000, env: EXEC_ENV, cwd: appDir || process.cwd() }, function (err, stdout) {
+          exec(cmd, { timeout: 90000, env: EXEC_ENV, cwd: chatCwd }, function (err, stdout) {
             try { fs.unlinkSync(promptFile); } catch (_) {}
             if (err) {
               log('chat', `CLI error: ${err.message}`);
@@ -427,7 +464,7 @@ const server = http.createServer((req, res) => {
           fs.writeFileSync(promptFile, prompt);
 
           const execCwd = appDir || process.cwd();
-          const cmd = buildCliCommand(CLI, promptFile, 'max');
+          const cmd = buildCliCommand(CLI, promptFile, 'max', execCwd);
           log('apply', `Invoking CLI in ${execCwd}`);
           log('apply', `Command: ${cmd.slice(0, 200)}${cmd.length > 200 ? '...' : ''}`);
 
