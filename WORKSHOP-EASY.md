@@ -4,7 +4,7 @@
 
 ## Let's understand what we need to build first and why?
 
-The UI annotator Chrome extension runs in the browser. The AI coding agent (Kiro CLI / Claude Code) runs in a terminal. There's no direct connection between them because a Chrome extension can't spawn shell processes, execute Python scripts, or edit files on disk. It can only make HTTP requests.
+The UI annotator Chrome extension runs in the browser. The AI coding agent (Kiro CLI, Claude Code, or **Cursor headless agent CLI**) runs in a terminal. There's no direct connection between them because a Chrome extension can't spawn shell processes, execute Python scripts, or edit files on disk. It can only make HTTP requests.
 
 This is why, you need something like an **agent bridge** that is a local HTTP server that connects the two:
 
@@ -37,7 +37,9 @@ The agent bridge is already built for you at `tools/agent-bridge/agent-bridge.js
    kiro-cli chat -a --no-interactive --effort max "$(cat .tmp/apply-prompt.txt)"
   # Claude
    claude --dangerously-skip-permissions -p "$(cat /absolute/path/to/.tmp/apply-prompt.txt)"
-   ```
+  # Cursor (headless agent CLI)
+   cat .tmp/apply-prompt.txt | agent -p --force --workspace some-podcast-app
+  ```
 3. CLI edits source files → Vite hot-reloads the page
 4. Bridge polls the dev server to confirm it's responding
 5. Bridge runs verification:
@@ -237,29 +239,56 @@ Now that the extension can talk to localhost, start the agent bridge and use it.
 
 ### Step 3: Start the agent bridge
 
+From the workshop repo root:
+
 ```bash
 node tools/agent-bridge/agent-bridge.js \
   --port 9999 \
   --feedback .tmp/feedback.json \
-  --app-dir some-podcast-app
+  --app-dir some-podcast-app \
+  --cli cursor
 ```
-The parameters that passed in the above command are:
+
+The parameters passed in the above command are:
+
 | Flag | What it does |
 |------|--------------|
 | `--port 9999` | Port the bridge listens on. The extension POSTs annotations here. |
 | `--feedback .tmp/feedback.json` | Where the bridge writes the annotations JSON so the AI CLI can read them. |
 | `--app-dir some-podcast-app` | Your app's workspace root. The bridge runs the AI CLI and verification inside this directory. |
----
-Default AI CLI is Kiro and if you are using Claude Code add the `--cli claude` at the end:
+| `--cli cursor` | Use Cursor's headless `agent` CLI (alias: `--cli agent`). |
+
+**Other AI CLIs** — omit `--cli` for Kiro (default), or pass `--cli claude` for Claude Code:
+
 ```bash
-node tools/agent-bridge/agent-bridge.js ... --cli claude
+# Kiro (default)
+node tools/agent-bridge/agent-bridge.js \
+  --port 9999 \
+  --feedback .tmp/feedback.json \
+  --app-dir some-podcast-app
+
+# Claude Code
+node tools/agent-bridge/agent-bridge.js \
+  --port 9999 \
+  --feedback .tmp/feedback.json \
+  --app-dir some-podcast-app \
+  --cli claude
 ```
 
 You should see:
+
 ```
-[agent-bridge] Using CLI: kiro # or claude
+[agent-bridge] Using CLI: Cursor agent (agent)
 [agent-bridge] Listening on http://localhost:9999
 ```
+
+#### Cursor CLI troubleshooting
+
+| Issue | Fix |
+|-------|-----|
+| Bridge warns `agent not found on PATH` | Run `which agent` — install or link the Cursor CLI if missing |
+| Apply hangs or makes no file edits | Bridge uses `agent -p --force` for non-interactive edits; ensure `--app-dir` points at `some-podcast-app` |
+| "Bridge not running" in extension | Start the bridge on port 9999 before clicking Apply Changes |
 
 ### Step 4: Annotate and apply
 
