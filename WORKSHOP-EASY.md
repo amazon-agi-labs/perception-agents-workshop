@@ -359,5 +359,27 @@ This makes the hourglass emoji spin while the agent bridge is processing.
 
 Most people complete this in about **15 minutes**. If you're flying through it, check out the [Bonus Challenge](WORKSHOP.md#bonus-challenge-10-mins).
 
+---
+
+## To get working in Cursor
+
+Cursor can use the same agent bridge flow if the headless `agent` CLI is installed and available on `PATH`.
+
+Start the bridge with `--cli cursor`:
+
+```bash
+node tools/agent-bridge/agent-bridge.js \
+  --port 9999 \
+  --feedback .tmp/feedback.json \
+  --app-dir some-podcast-app \
+  --cli cursor
+```
+
+The bridge should report:
+
+```
+[agent-bridge] Using CLI: Cursor agent (agent)
+[agent-bridge] Listening on http://localhost:9999
+```
 
 > [← Back to main workshop](WORKSHOP.md#ai-powered-ui-verification-challenge)
