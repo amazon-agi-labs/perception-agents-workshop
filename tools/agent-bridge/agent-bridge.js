@@ -357,6 +357,7 @@ const server = http.createServer((req, res) => {
             'th{background:#f8f9fa}code{background:#f0f0f0;padding:2px 5px;border-radius:3px;font-size:0.9em}' +
             'h1{border-bottom:2px solid #6c63ff;padding-bottom:8px}h2{margin-top:2em}details{margin:1em 0}' +
             'hr{border:0;border-top:1px solid #e9ecef;margin:2em 0}ul{margin:1em 0;padding-left:1.5em}' +
+            'img{max-width:100%;height:auto;border:1px solid #e9ecef;border-radius:4px}' +
             'summary{cursor:pointer;font-weight:600}</style></head><body>' +
             renderMarkdown(content) +
             '</body></html>';
