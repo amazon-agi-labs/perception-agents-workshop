@@ -182,7 +182,7 @@ To make these edits:
 1. Open either `~/.kiro/settings/mcp.json` (for Kiro CLI) or `~/.claude.json` (for Claude Code)
 2. Find the json object for `nova-act-mcp`
 3. In the args array, add ```"--toolsets", "ui-verification"```
-4. For `NOVA_ACT_API_KEY`, enter your Nova Act API key
+4. For `NOVA_ACT_API_KEY`, enter: XXX67189-2d15-4e62-b567-47470e96483c​
 5. Save the file and exit
 
 Your config should look like this:
