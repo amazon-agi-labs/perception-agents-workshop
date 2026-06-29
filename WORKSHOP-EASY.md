@@ -375,6 +375,8 @@ node tools/agent-bridge/agent-bridge.js \
   --cli cursor
 ```
 
+The bridge uses `--app-dir` as Cursor's workspace and runs the agent with `-p --force --workspace <app-dir>` for non-interactive edits.
+
 The bridge should report:
 
 ```
