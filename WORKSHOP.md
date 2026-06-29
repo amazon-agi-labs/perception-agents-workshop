@@ -407,6 +407,11 @@ What if you didn't need to click and type to annotate at all? [Bee](https://bee.
                                    │   kiro-cli chat ...         │
                                    │                             │
                                    │   → Edits src/App.css       │
+                                   │                             │
+                                   │   → Polls dev server        │
+                                   │   → Runs verification       │
+                                   │     (verify-with-nova-act)  │
+                                   │   → Report viewable in UI   │
                                    └─────────────────────────────┘
 ```
 
@@ -427,6 +432,8 @@ The Bee annotator is a reverse proxy that:
 4. If it's design-related, it fetches the full conversation summary and transcript via `bee conversations get <id> --json`
 5. Injects a sidebar into the proxied page showing conversation cards with title, summary, and key takeaways
 6. Clicking **Apply** on a card builds a prompt from the conversation context and invokes your AI CLI to make the code changes
+7. After the code changes are applied, the proxy polls the dev server until it's responsive, then automatically runs **UI verification** via `verify-with-nova-act.py`
+8. The sidebar shows real-time progress (Applying → Verifying → Done) and provides a **"View Report"** link when verification completes
 
 #### Step-by-step
 
@@ -437,7 +444,13 @@ cd some-podcast-app
 npm run dev
 ```
 
-**2. Start the Bee proxy** (from the repo root):
+**2. Export your Nova Act API key** (required for verification):
+
+```bash
+export NOVA_ACT_API_KEY="<your-api-key>"
+```
+
+**3. Start the Bee proxy** (from the repo root):
 
 ```bash
 node tools/bee-annotator-solution/proxy-worker.js \
@@ -448,30 +461,40 @@ node tools/bee-annotator-solution/proxy-worker.js \
   --app-dir some-podcast-app
 ```
 
-**3. Open the proxied app** at [http://localhost:9997](http://localhost:9997). You'll see the app with a dark sidebar on the right saying "Waiting for design conversations..."
+To use Kiro CLI instead of Claude (the default), add `--cli kiro-cli`:
+```bash
+node tools/bee-annotator-solution/proxy-worker.js \
+  --target http://localhost:5173 \
+  --port 9997 \
+  --feedback some-podcast-app/.tmp/bee-conv-feedback.json \
+  --inspector-script tools/bee-annotator-solution/inspector.js \
+  --app-dir some-podcast-app \
+  --cli kiro-cli
+```
 
-**4. Have a design conversation** near your Bee device. For example, say out loud:
+**4. Open the proxied app** at [http://localhost:9997](http://localhost:9997). You'll see the app with a dark sidebar on the right saying "Waiting for design conversations..."
+
+**5. Have a design conversation** near your Bee device. For example, say out loud:
 
 > "The hero title font should be a serif font. The play buttons are too big, make them smaller. And the footer link color should match the badge color."
 
-**5. Wait for the conversation to complete.** Bee processes it (typically 10-30 seconds after you stop speaking). A card will appear in the sidebar with the conversation title, summary, and key takeaways extracted by Bee.
+**6. Wait for the conversation to complete.** Bee processes it (typically 10-30 seconds after you stop speaking). A card will appear in the sidebar with the conversation title, summary, and key takeaways extracted by Bee.
 
-**6. Click "Apply".** The proxy builds a prompt from the conversation's key takeaways and feeds it to your AI CLI. Watch the agent edit your source files. The dev server hot-reloads.
+**7. Click "Apply".** The proxy builds a prompt from the conversation's key takeaways and feeds it to your AI CLI. The sidebar shows real-time status:
+- **"Applying..."** — the AI agent is editing source files
+- **"Verifying..."** — Nova Act is running CSS checks and flow assertions
+- **"✓ Verification complete"** — done, with a **"View Report"** link
 
-**7. Verify.** Check the browser to see the changes live. Optionally run verification:
-
-```bash
-# In your IDE
-/ui-verification http://localhost:5173 in some-podcast-app directory
-```
+**8. Check the report.** Click the "View Report" link in the sidebar, or open `http://localhost:9997/api/bee/report/view` directly. The report shows pass/fail for all CSS rules and Gherkin flow scenarios.
 
 #### Tips
 
 - The sidebar shows a connection status dot: green for connected to Bee stream, yellow for connecting, red for disconnected
 - Click **Details** on a card to see the full conversation summary, key takeaways, and transcript
-- Click **Copy** to copy the conversation as a prompt you can paste manually
+- Click **Dismiss** to remove a conversation card you don't want to act on
 - The `--filter` flag lets you customize which keywords trigger design detection
 - Set `BEE_CLI_PATH` env var if your `bee` binary is in a non-standard location
+- You can check the pipeline status at any time: `curl -s http://localhost:9997/api/bee/apply/status | python3 -m json.tool`
 
 #### Reference solution
 

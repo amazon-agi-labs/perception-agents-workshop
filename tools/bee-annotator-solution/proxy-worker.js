@@ -459,6 +459,28 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // ─── Report view endpoint ──────────────────────────────────────
+  if (req.url === '/api/bee/report/view') {
+    const execCwd = appDir || process.cwd();
+    const reportsDir = path.join(execCwd, '.ui-verification', 'reports');
+    try {
+      const dirs = fs.readdirSync(reportsDir).filter(d => fs.statSync(path.join(reportsDir, d)).isDirectory()).sort().reverse();
+      for (const dir of dirs) {
+        const rp = path.join(reportsDir, dir, 'report.md');
+        if (fs.existsSync(rp)) {
+          const md = fs.readFileSync(rp, 'utf-8');
+          const html = '<html><head><meta charset="utf-8"><title>Verification Report</title><style>body{font-family:-apple-system,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;background:#0F1111;color:#E8E8E8;line-height:1.6}h1,h2,h3{color:#5A969E}table{border-collapse:collapse;width:100%}th,td{border:1px solid #2D3A4A;padding:8px;text-align:left}th{background:#1A1A1A}code{background:#1A1A1A;padding:2px 6px;border-radius:4px;font-size:13px}pre{background:#1A1A1A;padding:16px;border-radius:8px;overflow-x:auto}</style></head><body><pre>' + md.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre></body></html>';
+          res.writeHead(200, { 'Content-Type': 'text/html', 'Access-Control-Allow-Origin': '*' });
+          res.end(html);
+          return;
+        }
+      }
+    } catch (_) {}
+    res.writeHead(200, { 'Content-Type': 'text/html', 'Access-Control-Allow-Origin': '*' });
+    res.end('<html><body><h1>No report found</h1><p>Run verification first.</p></body></html>');
+    return;
+  }
+
   // ─── Apply a conversation's design feedback via AI CLI ──────────
   if (req.url === '/api/bee/apply/status') {
     const statusFile = path.join(path.dirname(feedbackPath), 'bee-conv-apply-status.json');
@@ -546,8 +568,72 @@ const server = http.createServer((req, res) => {
               fs.writeFileSync(statusFile, JSON.stringify({ status: 'error', error: err.message, timestamp: Date.now() }));
               return;
             }
-            fs.writeFileSync(statusFile, JSON.stringify({ status: 'done', timestamp: Date.now() }));
-            process.stderr.write('[bee-conv-apply] Changes applied successfully via ' + CLI + '\n');
+            process.stderr.write('[bee-conv-apply] Changes applied successfully via ' + CLI + '. Checking dev server...\n');
+
+            const appUrl = payload.url || 'http://localhost:5173';
+            var attempts = 0;
+            function checkServer() {
+              attempts++;
+              http.get(appUrl, function (r) {
+                r.resume();
+                if (r.statusCode >= 200 && r.statusCode < 500) {
+                  process.stderr.write('[bee-conv-apply] Dev server responding (attempt ' + attempts + ')\n');
+                  runVerification();
+                } else if (attempts < 20) {
+                  setTimeout(checkServer, 2000);
+                } else {
+                  runVerification();
+                }
+              }).on('error', function () {
+                if (attempts < 20) { setTimeout(checkServer, 2000); }
+                else {
+                  process.stderr.write('[bee-conv-apply] Dev server not responding, skipping verification\n');
+                  fs.writeFileSync(statusFile, JSON.stringify({ status: 'done', timestamp: Date.now() }));
+                }
+              });
+            }
+            checkServer();
+
+            function runVerification() {
+              process.stderr.write('[bee-conv-apply] Running verification...\n');
+              fs.writeFileSync(statusFile, JSON.stringify({ status: 'verifying', timestamp: Date.now() }));
+
+              const verifyScript = path.join(__dirname, '..', 'agent-bridge', 'verify-with-nova-act.py');
+              const verifyEnv = Object.assign({}, EXEC_ENV, { NOVA_ACT_API_KEY: process.env.NOVA_ACT_API_KEY || '' });
+              const venvPython = path.resolve(execCwd, '..', '.venv', 'bin', 'python3');
+              const pythonBin = fs.existsSync(venvPython) ? venvPython : 'python3';
+              const absAppDir = path.resolve(execCwd);
+              const verifyCmd = pythonBin + ' "' + verifyScript + '" --app-dir "' + absAppDir + '" --url "' + appUrl + '"';
+              process.stderr.write('[bee-conv-apply] Verify command: ' + verifyCmd + '\n');
+
+              exec(verifyCmd, { timeout: 300000, cwd: absAppDir, env: verifyEnv }, function (err2, stdout2, stderr2) {
+                if (err2) {
+                  var errMsg = (stderr2 || err2.message || '').replace(/\x1B\[[0-9;]*m/g, '').trim().slice(-500);
+                  process.stderr.write('[bee-conv-apply] Verification FAILED: ' + errMsg + '\n');
+                  fs.writeFileSync(statusFile, JSON.stringify({ status: 'error', error: 'Verification failed: ' + errMsg, timestamp: Date.now() }));
+                  return;
+                }
+                var report = null;
+                try {
+                  const result = JSON.parse((stdout2 || '').trim());
+                  report = result.report || null;
+                } catch (_) {
+                  try {
+                    const reportsDir = path.join(execCwd, '.ui-verification', 'reports');
+                    if (fs.existsSync(reportsDir)) {
+                      const dirs = fs.readdirSync(reportsDir).filter(d => fs.statSync(path.join(reportsDir, d)).isDirectory()).sort().reverse();
+                      for (const dir of dirs) {
+                        const rp = path.join(reportsDir, dir, 'report.md');
+                        if (fs.existsSync(rp)) { report = '.ui-verification/reports/' + dir + '/report.md'; break; }
+                      }
+                    }
+                  } catch (_) {}
+                }
+                var reportAbsPath = report ? path.join(execCwd, report) : null;
+                fs.writeFileSync(statusFile, JSON.stringify({ status: 'done', report: report, reportPath: reportAbsPath, timestamp: Date.now() }));
+                process.stderr.write('[bee-conv-apply] Verification complete. Report: ' + (report || 'none') + '\n');
+              });
+            }
           }
         } catch (err) {
           res.writeHead(400, { 'Access-Control-Allow-Origin': '*' });

@@ -201,20 +201,6 @@
       expandBtn.textContent = 'Details';
       expandBtn.addEventListener('click', function() { showDetail(conv); });
 
-      var copyBtn = document.createElement('button');
-      copyBtn.className = 'bee-conv-btn bee-conv-btn-copy';
-      copyBtn.textContent = 'Copy';
-      copyBtn.addEventListener('click', function() {
-        var text = (conv.title || '') + '\n\n' + (conv.shortSummary || conv.summary || '');
-        if (conv.keyTakeaways && conv.keyTakeaways.length > 0) {
-          text += '\n\nKey Takeaways:\n' + conv.keyTakeaways.map(function(t) { return '- ' + t; }).join('\n');
-        }
-        navigator.clipboard.writeText(text).then(function() {
-          copyBtn.textContent = '✓';
-          setTimeout(function() { copyBtn.textContent = 'Copy'; }, 1500);
-        });
-      });
-
       var dismissBtn = document.createElement('button');
       dismissBtn.className = 'bee-conv-btn bee-conv-btn-dismiss';
       dismissBtn.textContent = 'Dismiss';
@@ -225,7 +211,6 @@
 
       actions.appendChild(applyBtn);
       actions.appendChild(expandBtn);
-      actions.appendChild(copyBtn);
       actions.appendChild(dismissBtn);
       li.appendChild(actions);
       listEl.appendChild(li);
@@ -348,19 +333,61 @@
   }
 
   function pollApplyStatus(conv, btn) {
+    var actionsEl = btn.parentNode;
+    var verifyIndicator = null;
     var interval = setInterval(function() {
       fetch('/api/bee/apply/status').then(function(r) { return r.json(); }).then(function(s) {
-        if (s.status === 'done') {
+        if (s.status === 'running') {
+          btn.textContent = 'Applying...';
+        } else if (s.status === 'verifying') {
+          btn.textContent = 'Verifying...';
+          btn.style.cssText = 'background:rgba(255,159,64,0.15);color:rgb(255,159,64);cursor:wait';
+          if (!verifyIndicator && actionsEl) {
+            verifyIndicator = document.createElement('div');
+            verifyIndicator.style.cssText = 'width:100%;margin-top:8px;padding:8px 10px;background:rgba(255,159,64,0.08);border:1px solid rgba(255,159,64,0.2);border-radius:6px;font-size:11px;color:rgb(255,159,64);display:flex;align-items:center;gap:6px';
+            verifyIndicator.innerHTML = '<span style="display:inline-block;animation:bee-conv-pulse 1s infinite">⏳</span> Running verification...';
+            actionsEl.parentNode.appendChild(verifyIndicator);
+          }
+        } else if (s.status === 'done') {
           clearInterval(interval);
           conv.applied = true;
           btn.textContent = '✓ Applied';
+          btn.style.cssText = '';
           btn.classList.remove('applying');
           btn.classList.add('done');
+          if (verifyIndicator) {
+            verifyIndicator.style.cssText = 'width:100%;margin-top:8px;padding:8px 10px;background:rgba(76,175,80,0.08);border:1px solid rgba(76,175,80,0.2);border-radius:6px;font-size:11px;color:rgb(76,175,80);display:flex;align-items:center;gap:6px';
+            verifyIndicator.innerHTML = '<span>✓</span> Verification complete';
+            if (s.reportPath || s.report) {
+              var reportBtn = document.createElement('a');
+              reportBtn.href = '/api/bee/report/view';
+              reportBtn.target = '_blank';
+              reportBtn.style.cssText = 'margin-left:auto;padding:3px 8px;background:rgba(76,175,80,0.15);color:rgb(76,175,80);border-radius:4px;text-decoration:none;font-size:10px;font-weight:600';
+              reportBtn.textContent = 'View Report';
+              verifyIndicator.appendChild(reportBtn);
+            }
+          } else if (s.reportPath || s.report) {
+            var reportEl = document.createElement('div');
+            reportEl.style.cssText = 'width:100%;margin-top:8px;padding:8px 10px;background:rgba(76,175,80,0.08);border:1px solid rgba(76,175,80,0.2);border-radius:6px;font-size:11px;color:rgb(76,175,80);display:flex;align-items:center;gap:6px';
+            reportEl.innerHTML = '<span>✓</span> Verification complete';
+            var reportLink = document.createElement('a');
+            reportLink.href = '/api/bee/report/view';
+            reportLink.target = '_blank';
+            reportLink.style.cssText = 'margin-left:auto;padding:3px 8px;background:rgba(76,175,80,0.15);color:rgb(76,175,80);border-radius:4px;text-decoration:none;font-size:10px;font-weight:600';
+            reportLink.textContent = 'View Report';
+            reportEl.appendChild(reportLink);
+            actionsEl.parentNode.appendChild(reportEl);
+          }
         } else if (s.status === 'error') {
           clearInterval(interval);
           btn.textContent = 'Failed';
+          btn.style.cssText = '';
           btn.classList.remove('applying');
           btn.classList.add('error');
+          if (verifyIndicator) {
+            verifyIndicator.style.cssText = 'width:100%;margin-top:8px;padding:8px 10px;background:rgba(244,67,54,0.08);border:1px solid rgba(244,67,54,0.2);border-radius:6px;font-size:11px;color:rgb(244,67,54);display:flex;align-items:center;gap:6px';
+            verifyIndicator.innerHTML = '<span>✗</span> Verification failed';
+          }
           setTimeout(function() { btn.textContent = 'Apply'; btn.className = 'bee-conv-btn bee-conv-btn-apply'; }, 4000);
         }
       }).catch(function() {});
