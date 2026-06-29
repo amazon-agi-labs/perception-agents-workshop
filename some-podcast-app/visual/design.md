@@ -1,6 +1,6 @@
-# The Thinking Cap Podcast — Design Specification
+# The Some Podcast — Design Specification
 
-A single-page podcast landing page for "Probably Sentient Labs." Dark-themed header and footer with a gradient hero, white content area, and episode cards with embedded players.
+A single-page podcast landing page for "Some Labs." Dark-themed header and footer with a gradient hero, white content area, and episode cards with embedded players.
 
 ## Tokens
 

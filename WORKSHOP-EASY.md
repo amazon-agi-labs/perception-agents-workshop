@@ -265,7 +265,7 @@ Open http://localhost:5173 in Chrome.
 
 Note, if you need to restart your local server, you can do so with this:
 ```javascript
-cd thinking-cap-podcast-app
+cd some-podcast-app
 npm install && npm run dev
 ```
 
@@ -275,7 +275,7 @@ Use the extension to annotate elements that need changes. Point at each element 
 
 | # | Element to click | What to type |
 |---|-----------------|--------------|
-| 1 | "The Thinking Cap Podcast" heading | "Change this font to a serif font" |
+| 1 | "The Some Podcast" heading | "Change this font to a serif font" |
 | 2 | The published date | "The published date should be July 3, 2026" |
 | 3 | A play button on any episode | "Make the play buttons slightly smaller" |
 | 4 | A footer link | "Change the footer link color to match the hero badge color" |

@@ -283,7 +283,7 @@ Before you wire both primitives together, let's get hands-on with the Annotator 
 1. Open http://localhost:5173 in Chrome
 2. Click the extension icon → **"Annotate Current Page"**
 3. Switch to **Element** mode
-4. Click the hero heading ("The Thinking Cap Podcast")
+4. Click the hero heading ("The Some Podcast")
 5. Type: `Change this font to a serif font`
 6. Click **Save**
 7. Add a few more annotations (e.g. click a play button → `Make this smaller`)
@@ -292,7 +292,7 @@ Before you wire both primitives together, let's get hands-on with the Annotator 
 
 > #### Some other ideas of changes you could make
 >
-> * Change the font of "The Thinking Cap Podcast" heading to a serif font
+> * Change the font of "The Some Podcast" heading to a serif font
 > * The published date should be "July 3, 2026"
 > * Make the play buttons green 
 

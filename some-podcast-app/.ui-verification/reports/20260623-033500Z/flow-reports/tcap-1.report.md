@@ -12,9 +12,9 @@
 
 | Step | Type | Assertion | Result |
 |------|------|-----------|--------|
-| Header displays "Probably Sentient Labs" | Then | header_site_name | PASS |
+| Header displays "Some Labs" | Then | header_site_name | PASS |
 | Navigation shows "Blog", "Careers", "Podcast" | And | nav_links | PASS |
-| Hero heading "The Thinking Cap Podcast" | And | main_heading | PASS |
+| Hero heading "The Some Podcast" | And | main_heading | PASS |
 | Badge reads "NEW PODCAST" | And | new_podcast_badge | PASS |
 | 8 episode cards with play buttons | And | eight_episodes_with_play | PASS |
 | Streaming links (YouTube, Spotify, Apple, Wherever) | And | streaming_links | PASS |
