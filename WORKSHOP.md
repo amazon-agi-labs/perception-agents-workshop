@@ -301,9 +301,9 @@ After you save, the extension generates a prompt that you can pass to your codin
 ```bash
 # Copy the prompt from the extension's "Copy Prompt" button, then:
 # With Kiro:
-kiro-cli chat -a --no-interactive --effort max "$(cat <<'EOF'
+kiro-cli chat -a --no-interactive --effort max '$(cat <<"EOF"
    Use this annotation to update the src code for some-podcast-app: <paste prompt here>
-EOF)"
+EOF)'
 
 # With Claude:
 claude --dangerously-skip-permissions -p 'Use this annotation to update the src code for some-podcast-app: <paste prompt here>'
