@@ -311,8 +311,18 @@ claude --dangerously-skip-permissions -p 'Use this annotation to update the src 
 ```
 
 Once you've done that, go back to the landing page [localhost:5173](http://localhost:5173) in the browser and you should see all the changes have been applied. If you wanted to verify the updates you made still align with your design, the next step would be to run the /ui-verification skill to see if anything fails.
+
+```bash
+cd some-podcast-app
 ```
-cd some-podcast-app # if not already in this directory
+
+Start your coding agent
+```bash
+kiro-cli chat -a # or claude --dangerously-skip-permissions
+```
+
+Run the verification skill. Note that this will take a few minutes.
+```bash
 /ui-verification http://localhost:5173 
 ```
 
