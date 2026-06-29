@@ -275,7 +275,7 @@ The annotator extension is how you'll point at elements and describe what needs 
 1. Go to `chrome://extensions`
 2. Enable **Developer mode** (top right)
 3. Click **Load unpacked**
-4. Select: `aiewf-perception-agents-workshop/tools/extension`
+4. Select: `perception-agents-workshop/tools/extension`
 
 #### Try it out: annotate the app
 Before you wire both primitives together, let's get hands-on with the Annotator primitive. You'll use it to annotate the homepage of the podcast landing page. In the steps below, you will use the annotator to point at elements and describe what you want changed. 
