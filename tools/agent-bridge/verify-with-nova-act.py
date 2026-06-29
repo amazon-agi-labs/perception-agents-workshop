@@ -228,7 +228,7 @@ def write_report(app_dir, app_url, rules, visual_results, flow_results):
     effective_passed = v_passed
     effective_rate = f"{effective_passed}/{effective_total} = {100*effective_passed/effective_total:.1f}%" if effective_total > 0 else "N/A"
 
-    report = f"""# UI Verification Report — The Some Podcast
+    report = f"""# UI Verification Report — Some Podcast
 
 **URL:** {app_url}  
 **Date:** {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}  

@@ -1,4 +1,4 @@
-# The Some Podcast — Design Specification
+# Some Podcast — Design Specification
 
 A single-page podcast landing page for "Some Labs." Dark-themed header and footer with a gradient hero, white content area, and episode cards with embedded players.
 

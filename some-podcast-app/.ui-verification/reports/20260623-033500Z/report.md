@@ -1,6 +1,6 @@
 # UI Verification Report
 
-**App:** The Some Podcast  
+**App:** Some Podcast  
 **URL:** http://localhost:5173  
 **Date:** 2026-06-23T03:35:00Z  
 **Mode:** Generation + Verification (visual + flow)
