@@ -1,0 +1,10 @@
+{
+  "run_timestamp": "2026-06-29T15:26:00Z",
+  "sessions": [
+    {
+      "session_id": "27eae7ea-0d4c-4caf-855c-21394ad7f0f0",
+      "url": "http://localhost:5174",
+      "mode": "visual+flow"
+    }
+  ]
+}

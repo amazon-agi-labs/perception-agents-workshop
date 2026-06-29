@@ -97,9 +97,9 @@
 
 .hero-badge {
   display: inline-block;
-  background: rgba(156, 163, 175, 0.2);
-  border: 1px solid rgba(156, 163, 175, 0.4);
-  color: #9ca3af;
+  background: rgba(234, 179, 8, 0.2);
+  border: 1px solid rgba(234, 179, 8, 0.4);
+  color: #eab308;
   padding: 0.4rem 1rem;
   border-radius: 20px;
   font-size: 0.85rem;

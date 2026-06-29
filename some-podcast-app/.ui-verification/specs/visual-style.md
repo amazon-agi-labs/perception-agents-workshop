@@ -1,4 +1,4 @@
-<!-- generated from: http://localhost:5173 | 2026-06-22 -->
+<!-- generated from: http://localhost:5174 | 2026-06-29 -->
 
 # Visual Style
 
@@ -10,14 +10,14 @@
 | Body font family | body | font-family | contains:-apple-system |
 | Body font size | body | font-size | =16px |
 | Body line height | body | line-height | =27.2px |
-| Hero heading font | .hero h1 | font-family | contains:Segoe UI |
+| Hero heading font | .hero h1 | font-family | contains:Georgia |
 | Hero heading size | .hero h1 | font-size | =48px |
 | Hero heading weight | .hero h1 | font-weight | =700 |
 | Hero heading color | .hero h1 | color | ~rgb(255,255,255) |
 | Hero subtitle color | .hero-subtitle | color | ~rgb(160,160,176) |
 | Hero subtitle size | .hero-subtitle | font-size | =18.4px |
-| Hero badge color | .hero-badge | color | ~rgb(180,160,255) |
-| Hero badge bg | .hero-badge | background-color | ~rgb(180,160,255) |
+| Hero badge color | .hero-badge | color | ~rgb(234,179,8) |
+| Hero badge bg | .hero-badge | background-color | ~rgb(234,179,8) |
 | Hero badge radius | .hero-badge | border-radius | =20px |
 | Hero badge font size | .hero-badge | font-size | =13.6px |
 | Hero badge font weight | .hero-badge | font-weight | =600 |

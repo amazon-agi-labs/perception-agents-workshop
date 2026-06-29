@@ -1,11 +1,11 @@
 # flow: tcap-1
 # type: state_completeness
-# app: http://localhost:5173
+# app: http://localhost:5174
 
 Feature: Podcast landing page displays all content sections
 
   Scenario: All main sections are visible on the page
-    Given I am on the podcast landing page at "http://localhost:5173"
+    Given I am on the podcast landing page at "http://localhost:5174"
     Then the header should display "Some Labs" as the site name
     And the navigation should show "Blog", "Careers", and "Podcast" links
     And the hero section should display "Some Podcast" as the main heading

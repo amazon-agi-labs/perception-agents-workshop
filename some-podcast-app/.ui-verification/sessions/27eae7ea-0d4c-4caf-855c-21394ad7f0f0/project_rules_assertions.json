@@ -1,8 +1,8 @@
 {
   "category": "project_rules",
-  "url": "http://localhost:5173/",
-  "created_at": "2026-06-23T03:33:00.709258+00:00",
-  "updated_at": "2026-06-23T03:34:55.540678+00:00",
+  "url": "http://localhost:5174/",
+  "created_at": "2026-06-29T15:26:09.326354+00:00",
+  "updated_at": "2026-06-29T15:26:09.326354+00:00",
   "assertions": [
     {
       "name": "Header sticky",
@@ -14,7 +14,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:55.540678+00:00"
+      "verified_at": "2026-06-29T15:26:09.326354+00:00"
     },
     {
       "name": "Header padding",
@@ -26,7 +26,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:55.540678+00:00"
+      "verified_at": "2026-06-29T15:26:09.326354+00:00"
     },
     {
       "name": "Header inner max-width",
@@ -38,7 +38,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:55.540678+00:00"
+      "verified_at": "2026-06-29T15:26:09.326354+00:00"
     },
     {
       "name": "Header inner display",
@@ -50,7 +50,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:55.540678+00:00"
+      "verified_at": "2026-06-29T15:26:09.326354+00:00"
     },
     {
       "name": "Header inner align",
@@ -62,7 +62,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:55.540678+00:00"
+      "verified_at": "2026-06-29T15:26:09.326354+00:00"
     },
     {
       "name": "Header inner justify",
@@ -74,7 +74,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:55.540678+00:00"
+      "verified_at": "2026-06-29T15:26:09.326354+00:00"
     },
     {
       "name": "Hero padding",
@@ -86,7 +86,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:55.540678+00:00"
+      "verified_at": "2026-06-29T15:26:09.326354+00:00"
     },
     {
       "name": "Hero position",
@@ -98,7 +98,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:55.540678+00:00"
+      "verified_at": "2026-06-29T15:26:09.326354+00:00"
     },
     {
       "name": "Hero content max-width",
@@ -110,7 +110,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:55.540678+00:00"
+      "verified_at": "2026-06-29T15:26:09.326354+00:00"
     },
     {
       "name": "Main content max-width",
@@ -122,7 +122,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:55.540678+00:00"
+      "verified_at": "2026-06-29T15:26:09.326354+00:00"
     },
     {
       "name": "Main content padding",
@@ -134,7 +134,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:55.540678+00:00"
+      "verified_at": "2026-06-29T15:26:09.326354+00:00"
     },
     {
       "name": "Footer inner max-width",
@@ -146,7 +146,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:55.540678+00:00"
+      "verified_at": "2026-06-29T15:26:09.326354+00:00"
     },
     {
       "name": "Footer padding",
@@ -158,7 +158,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:55.540678+00:00"
+      "verified_at": "2026-06-29T15:26:09.326354+00:00"
     },
     {
       "name": "Streaming section padding",
@@ -170,7 +170,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:55.540678+00:00"
+      "verified_at": "2026-06-29T15:26:09.326354+00:00"
     },
     {
       "name": "Episode bottom border",
@@ -182,7 +182,7 @@
       "passed_elements": 7,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:55.540678+00:00"
+      "verified_at": "2026-06-29T15:26:09.326354+00:00"
     },
     {
       "name": "Episode margin bottom",
@@ -194,7 +194,7 @@
       "passed_elements": 8,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:55.540678+00:00"
+      "verified_at": "2026-06-29T15:26:09.326354+00:00"
     },
     {
       "name": "Episode padding bottom",
@@ -206,7 +206,7 @@
       "passed_elements": 8,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:55.540678+00:00"
+      "verified_at": "2026-06-29T15:26:09.326354+00:00"
     }
   ]
 }

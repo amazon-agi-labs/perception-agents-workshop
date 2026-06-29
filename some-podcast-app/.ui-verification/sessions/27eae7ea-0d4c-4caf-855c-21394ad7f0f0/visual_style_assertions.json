@@ -1,8 +1,8 @@
 {
   "category": "visual_style",
-  "url": "http://localhost:5173/",
-  "created_at": "2026-06-23T03:32:49.500631+00:00",
-  "updated_at": "2026-06-23T03:34:51.576745+00:00",
+  "url": "http://localhost:5174/",
+  "created_at": "2026-06-29T15:25:56.263121+00:00",
+  "updated_at": "2026-06-29T15:25:56.263121+00:00",
   "assertions": [
     {
       "name": "Body background",
@@ -14,7 +14,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Body text color",
@@ -26,7 +26,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Body font family",
@@ -38,7 +38,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Body font size",
@@ -50,7 +50,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Body line height",
@@ -62,19 +62,19 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Hero heading font",
       "selector": ".hero h1",
       "property": "font-family",
-      "constraint": "contains:Segoe UI",
+      "constraint": "contains:Georgia",
       "passed": true,
       "total_elements": 1,
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Hero heading size",
@@ -86,7 +86,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Hero heading weight",
@@ -98,7 +98,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Hero heading color",
@@ -110,7 +110,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Hero subtitle color",
@@ -122,7 +122,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Hero subtitle size",
@@ -134,31 +134,31 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Hero badge color",
       "selector": ".hero-badge",
       "property": "color",
-      "constraint": "~rgb(180,160,255)",
+      "constraint": "~rgb(234,179,8)",
       "passed": true,
       "total_elements": 1,
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Hero badge bg",
       "selector": ".hero-badge",
       "property": "background-color",
-      "constraint": "~rgb(180,160,255)",
+      "constraint": "~rgb(234,179,8)",
       "passed": true,
       "total_elements": 1,
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Hero badge radius",
@@ -170,7 +170,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Hero badge font size",
@@ -182,7 +182,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Hero badge font weight",
@@ -194,7 +194,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Episode h2 font",
@@ -206,7 +206,7 @@
       "passed_elements": 8,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Episode h2 size",
@@ -218,7 +218,7 @@
       "passed_elements": 8,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Episode h2 weight",
@@ -230,7 +230,7 @@
       "passed_elements": 8,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Episode h2 color",
@@ -242,7 +242,7 @@
       "passed_elements": 8,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Episode quote bg",
@@ -254,7 +254,7 @@
       "passed_elements": 8,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Episode quote color",
@@ -266,7 +266,7 @@
       "passed_elements": 8,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Episode quote radius",
@@ -278,7 +278,7 @@
       "passed_elements": 8,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Episode guest color",
@@ -290,7 +290,7 @@
       "passed_elements": 8,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Episode guest weight",
@@ -302,7 +302,7 @@
       "passed_elements": 8,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Episode number bg",
@@ -314,7 +314,7 @@
       "passed_elements": 8,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Episode number color",
@@ -326,7 +326,7 @@
       "passed_elements": 8,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Play button bg",
@@ -338,7 +338,7 @@
       "passed_elements": 8,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Play button color",
@@ -350,7 +350,7 @@
       "passed_elements": 8,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Player title weight",
@@ -362,7 +362,7 @@
       "passed_elements": 8,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Player duration color",
@@ -374,7 +374,7 @@
       "passed_elements": 8,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Meta tag bg",
@@ -386,7 +386,7 @@
       "passed_elements": 2,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Meta tag radius",
@@ -398,7 +398,7 @@
       "passed_elements": 2,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Streaming link bg",
@@ -410,7 +410,7 @@
       "passed_elements": 4,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Streaming link radius",
@@ -422,7 +422,7 @@
       "passed_elements": 4,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Streaming link weight",
@@ -434,7 +434,7 @@
       "passed_elements": 4,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Logo color",
@@ -446,7 +446,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Logo weight",
@@ -458,7 +458,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Logo size",
@@ -470,7 +470,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Nav link color",
@@ -482,7 +482,7 @@
       "passed_elements": 2,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Nav link weight",
@@ -494,7 +494,7 @@
       "passed_elements": 2,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Footer bg",
@@ -506,7 +506,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Footer text color",
@@ -518,7 +518,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Footer link color",
@@ -530,7 +530,7 @@
       "passed_elements": 3,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "Streaming section bg",
@@ -542,7 +542,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "H3 font family",
@@ -554,7 +554,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     },
     {
       "name": "H3 color",
@@ -566,7 +566,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:51.576745+00:00"
+      "verified_at": "2026-06-29T15:25:56.263121+00:00"
     }
   ]
 }

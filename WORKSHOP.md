@@ -6,12 +6,12 @@ You're a frontend developer preparing to ship a landing page for a podcast. Yest
 
 You have a few tools at your disposal:
 
-| Tool   | Description                   |
-| -----| ------------------------| 
-| [Nova Act Chrome Extension](https://github.com/amazon-agi-labs/nova-act-browser-extensions) | Annotate live UI elements in Chrome |
-| [UI Verification skills](https://github.com/amazon-agi-labs/nova-act-agent-skills) | Automated CSS rule checking |
-| [Nova Act SDK](https://github.com/aws/nova-act/tree/main/src/nova_act) | Browser automation to run verification flows |
-| [Nova Act MCP Server](https://github.com/amazon-agi-labs/amazon-nova-act-mcp) | Give your agent easy access to Nova Act's capabilities |
+| Tool                                                                                        | Description                                            |
+| ---------------------------------------------------------------------------------------------| --------------------------------------------------------|
+| [Nova Act Chrome Extension](https://github.com/amazon-agi-labs/nova-act-browser-extensions) | Annotate live UI elements in Chrome                    |
+| [UI Verification skills](https://github.com/amazon-agi-labs/nova-act-agent-skills)          | Automated CSS rule checking                            |
+| [Nova Act SDK](https://github.com/aws/nova-act/tree/main/src/nova_act)                      | Browser automation to run verification flows           |
+| [Nova Act MCP Server](https://github.com/amazon-agi-labs/amazon-nova-act-mcp)               | Give your agent easy access to Nova Act's capabilities |
 
 And you have an AI coding agent: [**Kiro CLI**](https://kiro.dev/) or **Claude Code**. **Make sure you have them running before you start this workshop!!**
 
@@ -45,16 +45,16 @@ Before we start building that, let's make sure we've got all of our prerequisite
 
 Make sure you have the following installed **before** the workshop begins.
 
-| Requirement | Version | Notes |
-|-------------|---------|-------|
-| **OS** | macOS or Linux | Required for Nova Act MCP server |
-| **Node.js** | v18+ | Needed for the sample app and agent bridge |
-| **npm** | Latest (ships with Node) | |
-| **Python** | 3.10+ | For the Nova Act SDK and verification scripts |
-| **Git** | Any recent version | To clone the repo |
-| **Chrome** | Latest stable | For the annotator extension and viewing the app |
-| **AI Coding Agent CLI** | Latest | **Kiro CLI** (`kiro-cli`) or **Claude Code** (`claude`). Install and authenticate before the workshop |
-| **uv** | Latest | For `uvx` installs; alternatively use `pip` directly |
+| Requirement             | Version                  | Notes                                                                                                 |
+| -------------------------| --------------------------| -------------------------------------------------------------------------------------------------------|
+| **OS**                  | macOS or Linux           | Required for Nova Act MCP server                                                                      |
+| **Node.js**             | v18+                     | Needed for the sample app and agent bridge                                                            |
+| **npm**                 | Latest (ships with Node) |                                                                                                       |
+| **Python**              | 3.10+                    | For the Nova Act SDK and verification scripts                                                         |
+| **Git**                 | Any recent version       | To clone the repo                                                                                     |
+| **Chrome**              | Latest stable            | For the annotator extension and viewing the app                                                       |
+| **AI Coding Agent CLI** | Latest                   | **Kiro CLI** (`kiro-cli`) or **Claude Code** (`claude`). Install and authenticate before the workshop |
+| **uv**                  | Latest                   | For `uvx` installs; alternatively use `pip` directly                                                  |
 
 ### Verify your prerequisites before you kick off
 
@@ -227,11 +227,11 @@ The `ui-verification` skill lets the agent check its own work. It spins up the r
 #### What happens when you run it?
 You can invoke the skill in three ways:
 
-| Command | What runs |
-|---------|-----------|
-| `Verify http://localhost:5173/ matches the design spec` | Visual checks only |
-| `Run flows on http://localhost:5173/` | Flow checks only |
-| `Verify http://localhost:5173/` | Both (visual first, then flows, into one combined report) |
+| Command                                                 | What runs                                                 |
+| ---------------------------------------------------------| -----------------------------------------------------------|
+| `Verify http://localhost:5173/ matches the design spec` | Visual checks only                                        |
+| `Run flows on http://localhost:5173/`                   | Flow checks only                                          |
+| `Verify http://localhost:5173/`                         | Both (visual first, then flows, into one combined report) |
 
 **Visual verification** reads spec files from `.ui-verification/specs/`, translates each claim into a deterministic `getComputedStyle()` check against the live DOM, and reports pass/fail per rule.
 
@@ -461,8 +461,8 @@ node tools/bee-annotator-solution/proxy-worker.js \
 **7. Verify.** Check the browser to see the changes live. Optionally run verification:
 
 ```bash
-# In your IDE
-/ui-verification http://localhost:5173 in some-podcast-app directory
+# In your AI CLI
+/ui-verification verify http://localhost:5173 
 ```
 
 #### Tips

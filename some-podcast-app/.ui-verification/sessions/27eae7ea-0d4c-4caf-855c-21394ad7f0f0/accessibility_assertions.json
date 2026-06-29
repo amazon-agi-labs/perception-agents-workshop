@@ -1,0 +1,104 @@
+{
+  "category": "accessibility",
+  "url": "http://localhost:5174/",
+  "created_at": "2026-06-29T15:26:03.820492+00:00",
+  "updated_at": "2026-06-29T15:26:03.820492+00:00",
+  "assertions": [
+    {
+      "name": "Header landmark visible",
+      "selector": "header",
+      "property": "display",
+      "constraint": "=block",
+      "passed": true,
+      "total_elements": 1,
+      "passed_elements": 1,
+      "failed_elements": 0,
+      "failures": [],
+      "verified_at": "2026-06-29T15:26:03.820492+00:00"
+    },
+    {
+      "name": "Nav landmark visible",
+      "selector": "nav",
+      "property": "display",
+      "constraint": "=block",
+      "passed": true,
+      "total_elements": 1,
+      "passed_elements": 1,
+      "failed_elements": 0,
+      "failures": [],
+      "verified_at": "2026-06-29T15:26:03.820492+00:00"
+    },
+    {
+      "name": "Main landmark visible",
+      "selector": "main",
+      "property": "display",
+      "constraint": "=block",
+      "passed": true,
+      "total_elements": 1,
+      "passed_elements": 1,
+      "failed_elements": 0,
+      "failures": [],
+      "verified_at": "2026-06-29T15:26:03.820492+00:00"
+    },
+    {
+      "name": "Footer landmark visible",
+      "selector": "footer",
+      "property": "display",
+      "constraint": "=block",
+      "passed": true,
+      "total_elements": 1,
+      "passed_elements": 1,
+      "failed_elements": 0,
+      "failures": [],
+      "verified_at": "2026-06-29T15:26:03.820492+00:00"
+    },
+    {
+      "name": "Play btn has aria-label",
+      "selector": "button[aria-label=\"Play episode 1\"]",
+      "property": "display",
+      "constraint": "=flex",
+      "passed": true,
+      "total_elements": 1,
+      "passed_elements": 1,
+      "failed_elements": 0,
+      "failures": [],
+      "verified_at": "2026-06-29T15:26:03.820492+00:00"
+    },
+    {
+      "name": "Hero heading rendered",
+      "selector": ".hero h1",
+      "property": "display",
+      "constraint": "=block",
+      "passed": true,
+      "total_elements": 1,
+      "passed_elements": 1,
+      "failed_elements": 0,
+      "failures": [],
+      "verified_at": "2026-06-29T15:26:03.820492+00:00"
+    },
+    {
+      "name": "Episode heading rendered",
+      "selector": ".episode h2",
+      "property": "display",
+      "constraint": "=block",
+      "passed": true,
+      "total_elements": 8,
+      "passed_elements": 8,
+      "failed_elements": 0,
+      "failures": [],
+      "verified_at": "2026-06-29T15:26:03.820492+00:00"
+    },
+    {
+      "name": "Streaming heading rendered",
+      "selector": ".streaming-section h3",
+      "property": "display",
+      "constraint": "=block",
+      "passed": true,
+      "total_elements": 1,
+      "passed_elements": 1,
+      "failed_elements": 0,
+      "failures": [],
+      "verified_at": "2026-06-29T15:26:03.820492+00:00"
+    }
+  ]
+}
