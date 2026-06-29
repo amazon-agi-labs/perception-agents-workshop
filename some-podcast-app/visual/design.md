@@ -15,7 +15,7 @@ colors:
   bg-alt: "#f8f9fa"
   border: "#e9ecef"
   quote-bg: "#f0eeff"
-  hero-badge-text: "#9ca3af"
+  hero-badge-text: "#eab308"
   footer-text: "#999999"
   footer-link: "#b4a0ff"
   nav-link: "#cccccc"
@@ -35,7 +35,7 @@ spacing:
 
 - **Header**: Sticky, dark (`primary`), full-width with inner constrained to 1200px. Flex row, logo left, nav right.
 - **Hero**: Gradient background (135deg from #1a1a2e through #16213e to #0f3460). Centered content, max-width 800px. Contains badge pill, h1, and subtitle.
-- **Main content**: Max-width 800px, auto-centered. Contains meta tags, intro paragraph (podcast name in bold italics), then episode cards.
+- **Main content**: Max-width 800px, auto-centered. Contains meta tags, intro paragraph, then episode cards.
 - **Streaming section**: Full-width `bg-alt` background, centered heading and flex-row of streaming links.
 - **Footer**: Dark (`primary`) background, centered text, max-width 1200px inner.
 
@@ -53,7 +53,7 @@ Each episode card contains:
 Pill-shaped links (8px radius) with white background, border, flex row with icon + text. Hover state adds accent border and shadow.
 
 ### Hero Badge
-Inline-block pill (20px radius), semi-transparent gray background, gray text, small uppercase-like text.
+Inline-block pill (20px radius), semi-transparent yellow background, yellow text, small uppercase-like text.
 
 ### Meta Tag
 Small inline pill (4px radius), bg-alt background, medium-weight text.

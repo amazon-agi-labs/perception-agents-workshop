@@ -1,8 +1,8 @@
 {
   "category": "platform_conventions",
-  "url": "http://localhost:5173/",
-  "created_at": "2026-06-23T03:33:11.337292+00:00",
-  "updated_at": "2026-06-23T03:34:59.791662+00:00",
+  "url": "http://localhost:5174/",
+  "created_at": "2026-06-29T15:26:13.110747+00:00",
+  "updated_at": "2026-06-29T15:26:13.110747+00:00",
   "assertions": [
     {
       "name": "Nav links display",
@@ -14,7 +14,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:59.791662+00:00"
+      "verified_at": "2026-06-29T15:26:13.110747+00:00"
     },
     {
       "name": "Nav links gap",
@@ -26,7 +26,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:59.791662+00:00"
+      "verified_at": "2026-06-29T15:26:13.110747+00:00"
     },
     {
       "name": "Nav list no bullets",
@@ -38,7 +38,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:59.791662+00:00"
+      "verified_at": "2026-06-29T15:26:13.110747+00:00"
     },
     {
       "name": "Episode header display",
@@ -50,7 +50,7 @@
       "passed_elements": 8,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:59.791662+00:00"
+      "verified_at": "2026-06-29T15:26:13.110747+00:00"
     },
     {
       "name": "Episode header align",
@@ -62,7 +62,7 @@
       "passed_elements": 8,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:59.791662+00:00"
+      "verified_at": "2026-06-29T15:26:13.110747+00:00"
     },
     {
       "name": "Episode header gap",
@@ -74,7 +74,7 @@
       "passed_elements": 8,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:59.791662+00:00"
+      "verified_at": "2026-06-29T15:26:13.110747+00:00"
     },
     {
       "name": "Meta display",
@@ -86,7 +86,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:59.791662+00:00"
+      "verified_at": "2026-06-29T15:26:13.110747+00:00"
     },
     {
       "name": "Meta align",
@@ -98,7 +98,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:59.791662+00:00"
+      "verified_at": "2026-06-29T15:26:13.110747+00:00"
     },
     {
       "name": "Meta gap",
@@ -110,7 +110,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:59.791662+00:00"
+      "verified_at": "2026-06-29T15:26:13.110747+00:00"
     },
     {
       "name": "Streaming links display",
@@ -122,7 +122,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:59.791662+00:00"
+      "verified_at": "2026-06-29T15:26:13.110747+00:00"
     },
     {
       "name": "Streaming links justify",
@@ -134,7 +134,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:59.791662+00:00"
+      "verified_at": "2026-06-29T15:26:13.110747+00:00"
     },
     {
       "name": "Streaming links gap",
@@ -146,7 +146,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:59.791662+00:00"
+      "verified_at": "2026-06-29T15:26:13.110747+00:00"
     },
     {
       "name": "Streaming section text-align",
@@ -158,7 +158,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:59.791662+00:00"
+      "verified_at": "2026-06-29T15:26:13.110747+00:00"
     },
     {
       "name": "Footer text-align",
@@ -170,7 +170,7 @@
       "passed_elements": 1,
       "failed_elements": 0,
       "failures": [],
-      "verified_at": "2026-06-23T03:34:59.791662+00:00"
+      "verified_at": "2026-06-29T15:26:13.110747+00:00"
     }
   ]
 }

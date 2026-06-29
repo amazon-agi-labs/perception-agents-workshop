@@ -1,4 +1,4 @@
-<!-- generated from: http://localhost:5173 | 2026-06-22 -->
+<!-- generated from: http://localhost:5174 | 2026-06-29 -->
 
 # Platform Conventions
 
