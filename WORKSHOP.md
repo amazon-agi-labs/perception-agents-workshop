@@ -326,8 +326,10 @@ Run the verification skill. Note that this will take a few minutes.
 /ui-verification http://localhost:5173 
 ```
 
+Once it has completed, exit the coding agent `(Ctrl/Cmd + C)` and navigate back to the project root folder `cd ..`.
+
 ### 4. Explore what's available
-Before you dive into the wiring up the two primitives, take a look at the project layout so you know where source files, specs, and tools live.
+Before you dive into wiring up the two primitives, take a look at the project layout so you know where source files, specs, and tools live.
 
 ```
 some-podcast-app/
