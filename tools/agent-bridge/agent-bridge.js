@@ -151,6 +151,29 @@ function renderMarkdown(md) {
   return marked.parse(md);
 }
 
+// Only reflect the caller's Origin back when it's a localhost page — this blocks
+// drive-by cross-origin requests from arbitrary websites while still letting the
+// browser extension (whose content-script origin is the local dev app) call us.
+function allowedOrigin(req) {
+  const origin = req.headers && req.headers.origin;
+  if (!origin) return null;
+  try {
+    const u = new URL(origin);
+    if ((u.protocol === 'http:' || u.protocol === 'https:') &&
+        (u.hostname === 'localhost' || u.hostname === '127.0.0.1')) {
+      return origin;
+    }
+  } catch (_) {}
+  return null;
+}
+
+function corsHeaders(req, extra) {
+  const h = Object.assign({}, extra || {});
+  const o = allowedOrigin(req);
+  if (o) { h['Access-Control-Allow-Origin'] = o; h['Vary'] = 'Origin'; }
+  return h;
+}
+
 // ─── HTTP Server ───────────────────────────────────────────────────────────────
 // API Endpoints:
 //   POST   /api/feedback       — Store a single annotation from the browser extension
@@ -170,7 +193,14 @@ const server = http.createServer((req, res) => {
   // Handle CORS preflight requests so the browser extension can call us cross-origin
   if (req.url && req.url.startsWith('/api/') && req.method === 'OPTIONS') {
     log('cors', `Preflight for ${req.url}`);
-    res.writeHead(204, { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST,DELETE,GET', 'Access-Control-Allow-Headers': 'Content-Type' });
+    const origin = allowedOrigin(req);
+    if (!origin) {
+      log('cors', `Blocked preflight from origin: ${req.headers.origin || '(none)'}`);
+      res.writeHead(403);
+      res.end();
+      return;
+    }
+    res.writeHead(204, { 'Access-Control-Allow-Origin': origin, 'Vary': 'Origin', 'Access-Control-Allow-Methods': 'POST,DELETE,GET', 'Access-Control-Allow-Headers': 'Content-Type' });
     res.end();
     return;
   }
@@ -192,11 +222,11 @@ const server = http.createServer((req, res) => {
           fs.mkdirSync(path.dirname(feedbackPath), { recursive: true });
           fs.writeFileSync(feedbackPath, JSON.stringify(existing, null, 2));
           log('feedback', `Saved to ${feedbackPath} (${existing.length} total annotations)`);
-          res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.writeHead(200, corsHeaders(req, { 'Content-Type': 'application/json' }));
           res.end('{"ok":true}');
         } catch (err) {
           log('feedback', `ERROR: ${err.message}`);
-          res.writeHead(400, { 'Access-Control-Allow-Origin': '*' });
+          res.writeHead(400, corsHeaders(req));
           res.end(JSON.stringify({ error: err.message }));
         }
       });
@@ -204,7 +234,7 @@ const server = http.createServer((req, res) => {
       log('feedback', 'Clearing all annotations');
       fs.mkdirSync(path.dirname(feedbackPath), { recursive: true });
       fs.writeFileSync(feedbackPath, '[]');
-      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.writeHead(200, corsHeaders(req, { 'Content-Type': 'application/json' }));
       res.end('{"ok":true}');
     } else {
       res.writeHead(405);
@@ -249,19 +279,19 @@ const server = http.createServer((req, res) => {
             try { fs.unlinkSync(promptFile); } catch (_) {}
             if (err) {
               log('chat', `CLI error: ${err.message}`);
-              res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+              res.writeHead(200, corsHeaders(req, { 'Content-Type': 'application/json' }));
               res.end(JSON.stringify({ answer: 'CLI error: ' + (err.message || 'timeout') }));
               return;
             }
             // Strip ANSI color codes and leading prompt markers from CLI output
             const clean = stdout.replace(/\x1B\[[0-9;]*m/g, '').replace(/^> /, '').trim();
             log('chat', `Response received (${clean.length} chars)`);
-            res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            res.writeHead(200, corsHeaders(req, { 'Content-Type': 'application/json' }));
             res.end(JSON.stringify({ answer: clean }));
           });
         } catch (err) {
           log('chat', `ERROR: ${err.message}`);
-          res.writeHead(400, { 'Access-Control-Allow-Origin': '*' });
+          res.writeHead(400, corsHeaders(req));
           res.end(JSON.stringify({ error: err.message }));
         }
       });
@@ -278,10 +308,10 @@ const server = http.createServer((req, res) => {
     const statusFile = path.join(path.dirname(feedbackPath), 'apply-status.json');
     if (fs.existsSync(statusFile)) {
       const status = fs.readFileSync(statusFile, 'utf-8');
-      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.writeHead(200, corsHeaders(req, { 'Content-Type': 'application/json' }));
       res.end(status);
     } else {
-      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.writeHead(200, corsHeaders(req, { 'Content-Type': 'application/json' }));
       res.end(JSON.stringify({ status: 'idle' }));
     }
     return;
@@ -310,7 +340,7 @@ const server = http.createServer((req, res) => {
       }
     } catch (_) {}
     log('report', report ? `Found: ${report}` : 'No report found');
-    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    res.writeHead(200, corsHeaders(req, { 'Content-Type': 'application/json' }));
     res.end(JSON.stringify({ report: report, reportPath: reportPath, timestamp: reportTime }));
     return;
   }
@@ -329,7 +359,7 @@ const server = http.createServer((req, res) => {
         if (fs.existsSync(imgPath)) {
           const ext = path.extname(imgPath).toLowerCase();
           const type = ext === '.jpg' || ext === '.jpeg' ? 'image/jpeg' : 'image/png';
-          res.writeHead(200, { 'Content-Type': type, 'Access-Control-Allow-Origin': '*' });
+          res.writeHead(200, corsHeaders(req, { 'Content-Type': type }));
           res.end(fs.readFileSync(imgPath));
           return;
         }
@@ -361,7 +391,7 @@ const server = http.createServer((req, res) => {
             'summary{cursor:pointer;font-weight:600}</style></head><body>' +
             renderMarkdown(content) +
             '</body></html>';
-          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+          res.writeHead(200, corsHeaders(req, { 'Content-Type': 'text/html; charset=utf-8' }));
           res.end(html);
           return;
         }
@@ -418,7 +448,7 @@ const server = http.createServer((req, res) => {
           fs.writeFileSync(statusFile, JSON.stringify({ status: 'running', sessionId: sessionId, timestamp: Date.now() }));
 
           // Respond immediately — the AI CLI runs asynchronously in the background
-          res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.writeHead(200, corsHeaders(req, { 'Content-Type': 'application/json' }));
           res.end(JSON.stringify({ ok: true, sessionId: sessionId, message: CLI + ' is applying changes...' }));
 
           // Write prompt to a temp file and invoke the CLI
@@ -475,7 +505,19 @@ const server = http.createServer((req, res) => {
             // After successful code edit, poll the dev server until it's responsive
             // (the code changes may have triggered a rebuild/hot-reload)
             log('apply', 'CLI finished successfully. Checking dev server...');
-            const appUrl = payload.url || 'http://localhost:5173';
+            let appUrl = 'http://localhost:5173';
+            if (payload.url) {
+              try {
+                const u = new URL(payload.url);
+                if (u.protocol === 'http:' && (u.hostname === 'localhost' || u.hostname === '127.0.0.1')) {
+                  appUrl = u.toString();
+                } else {
+                  log('apply', `Rejecting non-localhost url: ${payload.url}`);
+                }
+              } catch (_) {
+                log('apply', `Rejecting malformed url: ${payload.url}`);
+              }
+            }
             var attempts = 0;
             function checkServer() {
               attempts++;
@@ -514,9 +556,10 @@ const server = http.createServer((req, res) => {
               const venvPython = path.resolve(execCwd, '..', '.venv', 'bin', 'python3');
               const pythonBin = fs.existsSync(venvPython) ? venvPython : 'python3';
               const absAppDir = path.resolve(execCwd);
-              const verifyCmd = `${pythonBin} "${verifyScript}" --app-dir "${absAppDir}" --url "${appUrl}"`;
-              log('apply', `Verify command: ${verifyCmd}`);
-              exec(verifyCmd, { timeout: 300000, cwd: absAppDir, env: verifyEnv }, function (err2, stdout2, stderr2) {
+              const verifyArgs = [verifyScript, '--app-dir', absAppDir, '--url', appUrl];
+              log('apply', `Verify command: ${pythonBin} ${verifyArgs.join(' ')}`);
+              const { execFile } = require('child_process');
+              execFile(pythonBin, verifyArgs, { timeout: 300000, cwd: absAppDir, env: verifyEnv }, function (err2, stdout2, stderr2) {
                 if (err2) {
                   var errMsg = (stderr2 || err2.message || '').replace(/\x1B\[[0-9;]*m/g, '').trim().slice(-500);
                   log('apply', `Verification FAILED: ${errMsg}`);
@@ -547,7 +590,7 @@ const server = http.createServer((req, res) => {
           }
         } catch (err) {
           log('apply', `ERROR parsing request: ${err.message}`);
-          res.writeHead(400, { 'Access-Control-Allow-Origin': '*' });
+          res.writeHead(400, corsHeaders(req));
           res.end(JSON.stringify({ error: err.message }));
         }
       });
@@ -560,12 +603,12 @@ const server = http.createServer((req, res) => {
 
   // API-only mode — no proxy
   log('req', `404 — unknown route: ${req.method} ${req.url}`);
-  res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  res.writeHead(404, corsHeaders(req, { 'Content-Type': 'application/json' }));
   res.end(JSON.stringify({ error: 'Not found' }));
 });
 
 // Start the server and signal readiness to the parent process via stdout
-server.listen(port, () => {
+server.listen(port, '127.0.0.1', () => {
   process.stderr.write(`[agent-bridge] Listening on http://localhost:${port}\n`);
   process.stderr.write(`[agent-bridge] App dir: ${appDir || process.cwd()}\n`);
   process.stdout.write(`READY\n`);
