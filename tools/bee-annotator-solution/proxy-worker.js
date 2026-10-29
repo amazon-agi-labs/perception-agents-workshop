@@ -30,6 +30,8 @@
  *   --app-dir PATH           — App workspace root for AI CLI invocations
  *   --cli CMD                — AI CLI to use (auto-detects claude or kiro-cli)
  *   --filter KEYWORDS        — Comma-separated keywords to filter conversations
+ *   --allow-origin ORIGINS   — Extra page origins allowed to call /api/bee/* and /api/feedback (the proxy's own
+ *                              http://localhost:PORT and http://127.0.0.1:PORT are always allowed)
  *
  * Architecture:
  *   - Proxies all HTTP requests to the target server
@@ -44,11 +46,14 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { spawn, exec, execSync } = require('child_process');
+const { spawn, exec, execFile, execSync } = require('child_process');
+const { setAllowedOrigins, corsHeaders, allowedOrigin, checkHost, checkOrigin, checkRequest, safeLocalUrl } = require('../agent-bridge/request-guard');
 
 // ─── Argument parsing ─────────────────────────────────────────────────────────
 const args = process.argv.slice(2);
 let target, port, feedbackPath, inspectorScriptPath, appDir, filterKeywords, cliCmd;
+const allowOrigins = [];
+let allowOriginGiven = false;
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--target' && args[i + 1]) target = args[++i];
@@ -58,6 +63,10 @@ for (let i = 0; i < args.length; i++) {
   if (args[i] === '--app-dir' && args[i + 1]) appDir = args[++i];
   if (args[i] === '--cli' && args[i + 1]) cliCmd = args[++i];
   if (args[i] === '--filter' && args[i + 1]) filterKeywords = args[++i];
+  if (args[i] === '--allow-origin') {
+    allowOriginGiven = true;
+    if (args[i + 1] !== undefined && !args[i + 1].startsWith('--')) allowOrigins.push(...args[++i].split(',').filter(Boolean));
+  }
 }
 
 if (!port || !feedbackPath || !inspectorScriptPath) {
@@ -71,6 +80,7 @@ Options:
   --app-dir             Your app's workspace root (default: cwd)
   --cli                 AI CLI command (auto-detects claude or kiro-cli)
   --filter              Comma-separated filter keywords
+  --allow-origin        Extra page origins allowed to call /api/bee/* and /api/feedback (own origin always allowed)
 `);
   process.exit(1);
 }
@@ -94,19 +104,65 @@ function detectCli() {
 function buildCliCommand(cli, promptFile) {
   const file = cli.includes('kiro') ? path.resolve(promptFile) : promptFile;
   if (cli.includes('claude')) {
-    return `${cli} -p "$(cat ${file})" --allowedTools Edit,Read,Bash,Write`;
+    return `${cli} -p "$(cat '${file}')" --allowedTools Edit,Read,Bash,Write`;
   }
   if (cli.includes('kiro')) {
-    return `${cli} chat -a --resume --no-interactive --effort max "$(cat ${file})"`;
+    return `${cli} chat -a --resume --no-interactive --effort max "$(cat '${file}')"`;
   }
-  return `${cli} "$(cat ${file})"`;
+  return `${cli} "$(cat '${file}')"`;
+}
+
+// GET an http(s) dev-server URL. Dev servers often use self-signed certificates, and
+// verify-with-nova-act.py ignores TLS errors too, so https is not verified here.
+// Each attempt has a 10 s deadline for its response headers, so a server that never
+// answers (or trickles headers) falls into the retry path. Once headers arrive the attempt
+// is settled: the deadline is cleared, later errors (a body that stalls or resets) are
+// ignored so the caller's success and retry paths never both run, and the response is
+// closed, since only its status code is used.
+function getDevServer(url, cb) {
+  if (url.startsWith('https:')) return probeTcp(url, cb);
+  const deadline = setTimeout(() => req.destroy(new Error('no answer within 10 s')), 10000);
+  const onResponse = res => {
+    clearTimeout(deadline);
+    req.removeAllListeners('error');
+    req.on('error', () => {});
+    res.on('error', () => {});
+    cb(res);
+    res.destroy();
+  };
+  const req = http.get(url, onResponse);
+  req.on('close', () => clearTimeout(deadline));
+  return req;
+}
+
+// https dev servers usually use self-signed certificates, so instead of a TLS request
+// (which would need certificate checks turned off) check that the port accepts a TCP
+// connection, and report it as a 200. Same deadline and settle rules as getDevServer.
+function probeTcp(url, cb) {
+  const u = new URL(url);
+  const sock = require('net').connect(Number(u.port) || 443, u.hostname);
+  const deadline = setTimeout(() => sock.destroy(new Error('no answer within 10 s')), 10000);
+  sock.on('connect', () => {
+    clearTimeout(deadline);
+    sock.removeAllListeners('error');
+    sock.on('error', () => {});
+    sock.destroy();
+    cb({ statusCode: 200, resume() {}, destroy() {} });
+  });
+  sock.on('close', () => clearTimeout(deadline));
+  return sock;
 }
 
 const CLI = detectCli();
 const BEE_CLI = process.env.BEE_CLI_PATH || 'bee';
-const EXEC_ENV = Object.assign({}, process.env, {
+// Defense in depth: the AI CLI acts on Bee transcript text, so the Nova Act key is not
+// put in its environment; only the verification script (VERIFY_ENV) gets it. This does
+// not make the key unreachable: the CLI can still read config files that hold it.
+const VERIFY_ENV = Object.assign({}, process.env, {
   PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin',
 });
+const EXEC_ENV = Object.assign({}, VERIFY_ENV);
+delete EXEC_ENV.NOVA_ACT_API_KEY;
 
 process.stderr.write('[bee-proxy] Using AI CLI: ' + CLI + '\n');
 
@@ -156,7 +212,7 @@ function isDesignRelated(text) {
 
 // ─── Fetch full conversation details ──────────────────────────────────────────
 function fetchConversationDetails(conversationId, callback) {
-  exec(BEE_CLI + ' conversations get ' + conversationId + ' --json', { env: EXEC_ENV, timeout: 30000 }, function(err, stdout, stderr) {
+  execFile(BEE_CLI, ['conversations', 'get', String(conversationId), '--json'], { env: EXEC_ENV, timeout: 30000 }, function(err, stdout, stderr) {
     if (err) {
       process.stderr.write('[bee-conv] Failed to fetch conversation ' + conversationId + ': ' + (stderr || err.message) + '\n');
       callback(null);
@@ -173,7 +229,7 @@ function fetchConversationDetails(conversationId, callback) {
 }
 
 function fetchConversationTranscript(conversationId, callback) {
-  exec(BEE_CLI + ' conversations transcript ' + conversationId + ' --json', { env: EXEC_ENV, timeout: 30000 }, function(err, stdout, stderr) {
+  execFile(BEE_CLI, ['conversations', 'transcript', String(conversationId), '--json'], { env: EXEC_ENV, timeout: 30000 }, function(err, stdout, stderr) {
     if (err) {
       callback(null);
       return;
@@ -310,14 +366,62 @@ function getScriptTag() {
   return '<script>' + script + '</script>';
 }
 
+// Everything served from the target is same-origin with /api/bee/apply, so it must be a
+// local dev server, never a remote site. Forwarding is plain http only, and a target on
+// our own port would loop forever.
+if (target) {
+  const local = safeLocalUrl(target, null);
+  const t = local && new URL(local);
+  if (!t || t.protocol !== 'http:' || t.pathname !== '/' || t.search || Number(t.port || 80) === port) {
+    process.stderr.write('[bee-proxy] --target must be http://localhost:<port> or http://127.0.0.1:<port> (no path, not this proxy\'s own port), got: ' + target + '\n');
+    process.exit(1);
+  }
+}
 const targetUrl = target ? new URL(target) : null;
+
+// The sidebar (inspector.js) calls /api/bee/* same-origin, so the proxy's own origin is
+// always allowed; other local pages are not, unless named with --allow-origin.
+try {
+  if (allowOriginGiven && !allowOrigins.length) throw new Error('no origin given');
+  setAllowedOrigins(['http://localhost:' + port, 'http://127.0.0.1:' + port].concat(allowOrigins));
+} catch (e) {
+  process.stderr.write('[bee-proxy] --allow-origin: ' + e.message + '\n');
+  process.exit(1);
+}
+
+// This proxy's own API; every other path, /api/* included, belongs to the proxied app.
+function isOwnRoute(url) {
+  const pathname = String(url || '').split('?')[0];
+  return pathname.startsWith('/api/bee/') || pathname === '/api/feedback';
+}
 
 // ─── HTTP Server ──────────────────────────────────────────────────────────────
 const server = http.createServer((req, res) => {
-  if (req.url && req.url.startsWith('/api/')) {
+  // Refuse forged requests before any route. Every request, proxied ones included, needs
+  // a loopback Host (DNS rebinding); our own routes also get the Origin and Content-Type
+  // checks. The app's routes, its /api/* included, are passed through with the Host check
+  // only, so its own cross-origin POSTs (e.g. an OAuth form_post callback) still work.
+  // See agent-bridge/request-guard.js for why CORS is not enough.
+  const ownRoute = isOwnRoute(req.url);
+  const rejection = ownRoute ? checkRequest(req, port, ['/api/bee/apply', '/api/feedback']) : checkHost(req, port);
+  if (rejection) {
+    process.stderr.write('[bee-proxy] Rejected ' + req.method + ' ' + req.url + ': ' + rejection.reason + '\n');
+    res.writeHead(rejection.status, corsHeaders(req, { 'Content-Type': 'application/json' }));
+    res.end(JSON.stringify({ error: rejection.reason }));
+    return;
+  }
+
+  if (ownRoute) {
     if (req.method === 'OPTIONS') {
+      const origin = allowedOrigin(req);
+      if (!origin) {
+        res.writeHead(403);
+        res.end();
+        return;
+      }
       res.writeHead(204, {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': origin,
+        'Vary': 'Origin',
         'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
       });
@@ -329,13 +433,13 @@ const server = http.createServer((req, res) => {
   // ─── Conversations API ────────────────────────────────────────────
   if (req.url === '/api/bee/conversations') {
     if (req.method === 'GET') {
-      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.writeHead(200, corsHeaders(req, { 'Content-Type': 'application/json' }));
       res.end(JSON.stringify(conversations));
     } else if (req.method === 'DELETE') {
       conversations = [];
       seenConversationIds.clear();
       persistConversations();
-      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.writeHead(200, corsHeaders(req, { 'Content-Type': 'application/json' }));
       res.end('{"ok":true}');
     } else {
       res.writeHead(405);
@@ -348,10 +452,10 @@ const server = http.createServer((req, res) => {
     const convId = req.url.replace('/api/bee/conversations/', '');
     const conv = conversations.find(c => c.id === convId);
     if (conv) {
-      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.writeHead(200, corsHeaders(req, { 'Content-Type': 'application/json' }));
       res.end(JSON.stringify(conv));
     } else {
-      res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.writeHead(404, corsHeaders(req, { 'Content-Type': 'application/json' }));
       res.end(JSON.stringify({ error: 'Conversation not found' }));
     }
     return;
@@ -359,12 +463,11 @@ const server = http.createServer((req, res) => {
 
   // SSE stream
   if (req.url === '/api/bee/stream') {
-    res.writeHead(200, {
+    res.writeHead(200, corsHeaders(req, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       'Connection': 'keep-alive',
-      'Access-Control-Allow-Origin': '*',
-    });
+    }));
     res.write('data: ' + JSON.stringify({ type: 'connected', status: beeStreamStatus, conversationCount: conversations.length }) + '\n\n');
     sseClients.push(res);
     req.on('close', () => {
@@ -374,16 +477,16 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.url === '/api/bee/status') {
-    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    res.writeHead(200, corsHeaders(req, { 'Content-Type': 'application/json' }));
     res.end(JSON.stringify({ status: beeStreamStatus, conversationCount: conversations.length, filter: FILTER_WORDS }));
     return;
   }
 
   // ─── Retrieve latest conversations on demand ──────────────────────
   if (req.url === '/api/bee/retrieve' && req.method === 'POST') {
-    exec(BEE_CLI + ' conversations list --limit 5 --json', { env: EXEC_ENV, timeout: 30000 }, function(err, stdout, stderr) {
+    execFile(BEE_CLI, ['conversations', 'list', '--limit', '5', '--json'], { env: EXEC_ENV, timeout: 30000 }, function(err, stdout, stderr) {
       if (err) {
-        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.writeHead(500, corsHeaders(req, { 'Content-Type': 'application/json' }));
         res.end(JSON.stringify({ error: 'Failed to list conversations: ' + (stderr || err.message) }));
         return;
       }
@@ -394,7 +497,7 @@ const server = http.createServer((req, res) => {
         let pending = items.length;
 
         if (pending === 0) {
-          res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.writeHead(200, corsHeaders(req, { 'Content-Type': 'application/json' }));
           res.end(JSON.stringify({ ok: true, added: 0, total: conversations.length }));
           return;
         }
@@ -404,7 +507,7 @@ const server = http.createServer((req, res) => {
           if (seenConversationIds.has(id)) {
             pending--;
             if (pending === 0) {
-              res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+              res.writeHead(200, corsHeaders(req, { 'Content-Type': 'application/json' }));
               res.end(JSON.stringify({ ok: true, added: added, total: conversations.length }));
             }
             return;
@@ -438,21 +541,21 @@ const server = http.createServer((req, res) => {
                 added++;
                 pending--;
                 if (pending === 0) {
-                  res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+                  res.writeHead(200, corsHeaders(req, { 'Content-Type': 'application/json' }));
                   res.end(JSON.stringify({ ok: true, added: added, total: conversations.length }));
                 }
               });
             } else {
               pending--;
               if (pending === 0) {
-                res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+                res.writeHead(200, corsHeaders(req, { 'Content-Type': 'application/json' }));
                 res.end(JSON.stringify({ ok: true, added: added, total: conversations.length }));
               }
             }
           });
         });
       } catch (e) {
-        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.writeHead(500, corsHeaders(req, { 'Content-Type': 'application/json' }));
         res.end(JSON.stringify({ error: 'Failed to parse response: ' + e.message }));
       }
     });
@@ -470,13 +573,13 @@ const server = http.createServer((req, res) => {
         if (fs.existsSync(rp)) {
           const md = fs.readFileSync(rp, 'utf-8');
           const html = '<html><head><meta charset="utf-8"><title>Verification Report</title><style>body{font-family:-apple-system,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;background:#0F1111;color:#E8E8E8;line-height:1.6}h1,h2,h3{color:#5A969E}table{border-collapse:collapse;width:100%}th,td{border:1px solid #2D3A4A;padding:8px;text-align:left}th{background:#1A1A1A}code{background:#1A1A1A;padding:2px 6px;border-radius:4px;font-size:13px}pre{background:#1A1A1A;padding:16px;border-radius:8px;overflow-x:auto}</style></head><body><pre>' + md.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre></body></html>';
-          res.writeHead(200, { 'Content-Type': 'text/html', 'Access-Control-Allow-Origin': '*' });
+          res.writeHead(200, corsHeaders(req, { 'Content-Type': 'text/html' }));
           res.end(html);
           return;
         }
       }
     } catch (_) {}
-    res.writeHead(200, { 'Content-Type': 'text/html', 'Access-Control-Allow-Origin': '*' });
+    res.writeHead(200, corsHeaders(req, { 'Content-Type': 'text/html' }));
     res.end('<html><body><h1>No report found</h1><p>Run verification first.</p></body></html>');
     return;
   }
@@ -485,10 +588,10 @@ const server = http.createServer((req, res) => {
   if (req.url === '/api/bee/apply/status') {
     const statusFile = path.join(path.dirname(feedbackPath), 'bee-conv-apply-status.json');
     if (fs.existsSync(statusFile)) {
-      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.writeHead(200, corsHeaders(req, { 'Content-Type': 'application/json' }));
       res.end(fs.readFileSync(statusFile, 'utf-8'));
     } else {
-      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.writeHead(200, corsHeaders(req, { 'Content-Type': 'application/json' }));
       res.end(JSON.stringify({ status: 'idle' }));
     }
     return;
@@ -506,7 +609,7 @@ const server = http.createServer((req, res) => {
 
           const conv = conversations.find(c => c.id === convId);
           if (!conv && !instruction) {
-            res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            res.writeHead(400, corsHeaders(req, { 'Content-Type': 'application/json' }));
             res.end(JSON.stringify({ error: 'Conversation not found and no instruction provided' }));
             return;
           }
@@ -541,7 +644,7 @@ const server = http.createServer((req, res) => {
           fs.mkdirSync(path.dirname(statusFile), { recursive: true });
           fs.writeFileSync(statusFile, JSON.stringify({ status: 'running', timestamp: Date.now() }));
 
-          res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.writeHead(200, corsHeaders(req, { 'Content-Type': 'application/json' }));
           res.end(JSON.stringify({ ok: true, message: 'Applying conversation feedback via ' + CLI + '...' }));
 
           if (conv) conv.applied = true;
@@ -570,11 +673,15 @@ const server = http.createServer((req, res) => {
             }
             process.stderr.write('[bee-conv-apply] Changes applied successfully via ' + CLI + '. Checking dev server...\n');
 
-            const appUrl = payload.url || 'http://localhost:5173';
+            // Only a localhost dev-server URL is used; anything else falls back to the default.
+            const appUrl = safeLocalUrl(payload.url, 'http://localhost:5173');
+            if (payload.url && !safeLocalUrl(payload.url, null)) {
+              process.stderr.write('[bee-conv-apply] Rejecting non-localhost url: ' + payload.url + '\n');
+            }
             var attempts = 0;
             function checkServer() {
               attempts++;
-              http.get(appUrl, function (r) {
+              getDevServer(appUrl, function (r) {
                 r.resume();
                 if (r.statusCode >= 200 && r.statusCode < 500) {
                   process.stderr.write('[bee-conv-apply] Dev server responding (attempt ' + attempts + ')\n');
@@ -599,14 +706,13 @@ const server = http.createServer((req, res) => {
               fs.writeFileSync(statusFile, JSON.stringify({ status: 'verifying', timestamp: Date.now() }));
 
               const verifyScript = path.join(__dirname, '..', 'agent-bridge', 'verify-with-nova-act.py');
-              const verifyEnv = Object.assign({}, EXEC_ENV, { NOVA_ACT_API_KEY: process.env.NOVA_ACT_API_KEY || '' });
               const venvPython = path.resolve(execCwd, '..', '.venv', 'bin', 'python3');
               const pythonBin = fs.existsSync(venvPython) ? venvPython : 'python3';
               const absAppDir = path.resolve(execCwd);
-              const verifyCmd = pythonBin + ' "' + verifyScript + '" --app-dir "' + absAppDir + '" --url "' + appUrl + '"';
-              process.stderr.write('[bee-conv-apply] Verify command: ' + verifyCmd + '\n');
+              const verifyArgs = [verifyScript, '--app-dir', absAppDir, '--url', appUrl];
+              process.stderr.write('[bee-conv-apply] Verify command: ' + pythonBin + ' ' + verifyArgs.join(' ') + '\n');
 
-              exec(verifyCmd, { timeout: 300000, cwd: absAppDir, env: verifyEnv }, function (err2, stdout2, stderr2) {
+              execFile(pythonBin, verifyArgs, { timeout: 300000, cwd: absAppDir, env: VERIFY_ENV }, function (err2, stdout2, stderr2) {
                 if (err2) {
                   var errMsg = (stderr2 || err2.message || '').replace(/\x1B\[[0-9;]*m/g, '').trim().slice(-500);
                   process.stderr.write('[bee-conv-apply] Verification FAILED: ' + errMsg + '\n');
@@ -636,7 +742,7 @@ const server = http.createServer((req, res) => {
             }
           }
         } catch (err) {
-          res.writeHead(400, { 'Access-Control-Allow-Origin': '*' });
+          res.writeHead(400, corsHeaders(req));
           res.end(JSON.stringify({ error: err.message }));
         }
       });
@@ -662,17 +768,17 @@ const server = http.createServer((req, res) => {
           existing.push(entry);
           fs.mkdirSync(path.dirname(feedbackPath), { recursive: true });
           fs.writeFileSync(feedbackPath, JSON.stringify(existing, null, 2));
-          res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.writeHead(200, corsHeaders(req, { 'Content-Type': 'application/json' }));
           res.end('{"ok":true}');
         } catch (err) {
-          res.writeHead(400, { 'Access-Control-Allow-Origin': '*' });
+          res.writeHead(400, corsHeaders(req));
           res.end(JSON.stringify({ error: err.message }));
         }
       });
     } else if (req.method === 'DELETE') {
       fs.mkdirSync(path.dirname(feedbackPath), { recursive: true });
       fs.writeFileSync(feedbackPath, '[]');
-      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.writeHead(200, corsHeaders(req, { 'Content-Type': 'application/json' }));
       res.end('{"ok":true}');
     } else {
       res.writeHead(405);
@@ -729,7 +835,7 @@ const server = http.createServer((req, res) => {
   req.pipe(proxyReq);
 });
 
-server.listen(port, () => {
+server.listen(port, '127.0.0.1', () => {
   process.stderr.write('[bee-proxy] Listening on http://localhost:' + port + '\n');
   process.stderr.write('[bee-proxy] Proxying to: ' + target + '\n');
   process.stderr.write('[bee-proxy] App dir: ' + (appDir || process.cwd()) + '\n');
@@ -740,6 +846,8 @@ server.listen(port, () => {
 // ─── WebSocket proxy for HMR ─────────────────────────────────────────────────
 server.on('upgrade', (req, socket, head) => {
   if (!targetUrl) { socket.destroy(); return; }
+  // Browsers send Origin on WebSocket handshakes and CORS does not apply, so check it here.
+  if (checkHost(req, port) || checkOrigin(req)) { socket.destroy(); return; }
   const options = {
     hostname: targetUrl.hostname,
     port: targetUrl.port,

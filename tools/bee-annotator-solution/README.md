@@ -33,13 +33,14 @@ Then open `http://localhost:9997/` — you'll see the app with the Bee Conversat
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `--target` | Upstream app URL to proxy | (required) |
+| `--target` | Upstream app URL to proxy; must be `http://localhost:<port>` or `http://127.0.0.1:<port>` | (required) |
 | `--port` | Port for the proxy | (required) |
 | `--feedback` | Path to feedback JSON file | (required) |
 | `--inspector-script` | Path to `inspector.js` | (required) |
 | `--app-dir` | App root for AI CLI | cwd |
 | `--cli` | AI CLI command | auto-detects `claude` or `kiro-cli` |
 | `--filter` | Comma-separated filter keywords | design,css,color,font,layout,... |
+| `--allow-origin` | Extra page origins allowed to call `/api/bee/*` and `/api/feedback` (comma-separated) | the proxy's own origin only |
 
 ## Prerequisites
 

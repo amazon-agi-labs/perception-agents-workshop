@@ -224,8 +224,9 @@ Add `host_permissions` **after** the `background` block (before the final `}`):
 }
 ```
 2. Reload the extension at `chrome://extensions`
-3. Start the agent bridge:
+3. Start the agent bridge. It needs your Nova Act API key for verification and exits at startup if it is not set:
 ```bash
+export NOVA_ACT_API_KEY="<your-api-key>"
 node tools/agent-bridge/agent-bridge.js \
   --port 9999 \
   --feedback .tmp/feedback.json \
@@ -237,6 +238,8 @@ The parameters that passed in the above command are:
 | `--port 9999` | Port the bridge listens on. The extension POSTs annotations here. |
 | `--feedback .tmp/feedback.json` | Where the bridge writes the annotations JSON so the AI CLI can read them. |
 | `--app-dir some-podcast-app` | Your app's workspace root. The bridge runs the AI CLI and verification inside this directory. |
+
+The bridge only accepts requests from the app page the extension runs on, `http://localhost:5173` by default. If your app runs on another port or on https (Vite moves to 5174 when 5173 is busy), pass its exact origin, for example `--allow-origin http://localhost:5174` or `--allow-origin https://localhost:5173`. This replaces the default, and the bridge prints the origins it accepts at startup.
 
 To use Claude Code instead of the default (Kiro):
 ```bash
