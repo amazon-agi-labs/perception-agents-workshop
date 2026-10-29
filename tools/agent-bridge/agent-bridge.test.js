@@ -145,6 +145,23 @@ test('the AI CLI does not get NOVA_ACT_API_KEY in its environment', () => {
   for (const c of verify) assert.strictEqual(c.novaKeyInEnv, true, 'verification env lacks the key');
 });
 
+test('an https dev server that accepts connections is treated as up and verified', async () => {
+  // https dev servers usually have self-signed certificates; the poll only checks that the
+  // port accepts connections, so a plain TCP listener stands in for one here.
+  const conns = [];
+  const tcp = require('net').createServer(c => conns.push(c));
+  await new Promise(r => tcp.listen(0, '127.0.0.1', r));
+  const s = await startServer(SCRIPT, bridgeArgs, KEY_ENV);
+  try {
+    const url = 'https://127.0.0.1:' + tcp.address().port + '/';
+    const r = await request(s.port, { method: 'POST', path: '/api/apply', headers: { origin: 'http://localhost:5173', 'content-type': 'application/json' }, body: JSON.stringify({ annotations: [{ feedback: 'x', selector: '.x' }], url: url }) });
+    assert.strictEqual(r.status, 200);
+    await sleep(3000);
+    const verifies = s.childCalls().filter(c => JSON.stringify(c.args).includes('verify-with-nova-act.py'));
+    assert.strictEqual(verifies.length, 1, 'verification ran ' + verifies.length + ' times');
+  } finally { s.stop(); conns.forEach(c => c.destroy()); tcp.close(); }
+});
+
 test('an https app url does not crash the bridge', async () => {
   const s = await startServer(SCRIPT, bridgeArgs, KEY_ENV);
   try {

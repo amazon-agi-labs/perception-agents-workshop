@@ -120,6 +120,7 @@ function buildCliCommand(cli, promptFile) {
 // ignored so the caller's success and retry paths never both run, and the response is
 // closed, since only its status code is used.
 function getDevServer(url, cb) {
+  if (url.startsWith('https:')) return probeTcp(url, cb);
   const deadline = setTimeout(() => req.destroy(new Error('no answer within 10 s')), 10000);
   const onResponse = res => {
     clearTimeout(deadline);
@@ -129,11 +130,27 @@ function getDevServer(url, cb) {
     cb(res);
     res.destroy();
   };
-  const req = url.startsWith('https:')
-    ? require('https').get(url, { rejectUnauthorized: false }, onResponse)
-    : http.get(url, onResponse);
+  const req = http.get(url, onResponse);
   req.on('close', () => clearTimeout(deadline));
   return req;
+}
+
+// https dev servers usually use self-signed certificates, so instead of a TLS request
+// (which would need certificate checks turned off) check that the port accepts a TCP
+// connection, and report it as a 200. Same deadline and settle rules as getDevServer.
+function probeTcp(url, cb) {
+  const u = new URL(url);
+  const sock = require('net').connect(Number(u.port) || 443, u.hostname);
+  const deadline = setTimeout(() => sock.destroy(new Error('no answer within 10 s')), 10000);
+  sock.on('connect', () => {
+    clearTimeout(deadline);
+    sock.removeAllListeners('error');
+    sock.on('error', () => {});
+    sock.destroy();
+    cb({ statusCode: 200, resume() {}, destroy() {} });
+  });
+  sock.on('close', () => clearTimeout(deadline));
+  return sock;
 }
 
 const CLI = detectCli();

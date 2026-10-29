@@ -232,6 +232,15 @@ test('a dev server that sends headers then resets gets exactly one proxy verific
   } finally { reset.close(); }
 });
 
+test('an https dev server that accepts connections is treated as up by the proxy', async () => {
+  const conns = [];
+  const tcp = require('net').createServer(c => conns.push(c));
+  await new Promise(r => tcp.listen(0, '127.0.0.1', r));
+  try {
+    assert.strictEqual(await verifyCountAfter('https://127.0.0.1:' + tcp.address().port + '/', 3000), 1);
+  } finally { conns.forEach(c => c.destroy()); tcp.close(); }
+});
+
 test('an https app url does not crash the proxy', async () => {
   const s = await startServer(SCRIPT, proxyArgs('http://127.0.0.1:' + dev.address().port), { NOVA_ACT_API_KEY: 'test-placeholder-not-a-key' });
   try {
