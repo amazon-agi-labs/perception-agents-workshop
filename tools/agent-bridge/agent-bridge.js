@@ -29,6 +29,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { setAllowedOrigins, listAllowedOrigins, corsHeaders, allowedOrigin, checkRequest, safeLocalUrl } = require('./request-guard');
 let marked;
 try {
   ({ marked } = require('marked'));
@@ -46,12 +47,18 @@ try {
 // Parse command-line arguments for server configuration
 const args = process.argv.slice(2);
 let port, feedbackPath, appDir, cliCmd;
+const allowOrigins = [];
+let allowOriginGiven = false;
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--port' && args[i + 1]) port = parseInt(args[++i]);       // HTTP server port
   if (args[i] === '--feedback' && args[i + 1]) feedbackPath = args[++i];     // JSON file to persist annotations
   if (args[i] === '--app-dir' && args[i + 1]) appDir = args[++i];           // Workspace root for the target app
   if (args[i] === '--cli' && args[i + 1]) cliCmd = args[++i];               // AI CLI binary (claude or kiro-cli)
+  if (args[i] === '--allow-origin') {                                          // page origin(s) allowed to call us
+    allowOriginGiven = true;
+    if (args[i + 1] !== undefined && !args[i + 1].startsWith('--')) allowOrigins.push(...args[++i].split(',').filter(Boolean));
+  }
 }
 
 if (!port || !feedbackPath) {
@@ -62,6 +69,26 @@ Options:
   --feedback          Path to store annotation feedback JSON (required)
   --app-dir           Your app's workspace root
   --cli               AI CLI command (default: kiro-cli, pass "claude" for Claude Code)
+  --allow-origin      Origin of the app page the extension runs on (repeatable or
+                      comma-separated; replaces the default
+                      http://localhost:5173,http://127.0.0.1:5173)
+`);
+  process.exit(1);
+}
+
+// Only the app page the extension annotates may call the bridge, not every localhost page.
+try {
+  if (allowOriginGiven && !allowOrigins.length) throw new Error('no origin given');
+  setAllowedOrigins(allowOriginGiven ? allowOrigins : ['http://localhost:5173', 'http://127.0.0.1:5173']);
+} catch (e) {
+  process.stderr.write('[agent-bridge] --allow-origin: ' + e.message + '\n');
+  process.exit(1);
+}
+
+// Verification needs a Nova Act API key; it must come from the environment.
+if (!process.env.NOVA_ACT_API_KEY) {
+  process.stderr.write(`[agent-bridge] NOVA_ACT_API_KEY is not set. Export your Nova Act API key before starting the bridge:
+  export NOVA_ACT_API_KEY="<your-api-key>"
 `);
   process.exit(1);
 }
@@ -132,9 +159,39 @@ function generateSessionId() {
   return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
 }
 
+// GET an http(s) dev-server URL. Dev servers often use self-signed certificates, and
+// verify-with-nova-act.py ignores TLS errors too, so https is not verified here.
+// Each attempt has a 10 s deadline for its response headers, so a server that never
+// answers (or trickles headers) falls into the retry path. Once headers arrive the attempt
+// is settled: the deadline is cleared, later errors (a body that stalls or resets) are
+// ignored so the caller's success and retry paths never both run, and the response is
+// closed, since only its status code is used.
+function getDevServer(url, cb) {
+  const deadline = setTimeout(() => req.destroy(new Error('no answer within 10 s')), 10000);
+  const onResponse = res => {
+    clearTimeout(deadline);
+    req.removeAllListeners('error');
+    req.on('error', () => {});
+    res.on('error', () => {});
+    cb(res);
+    res.destroy();
+  };
+  const req = url.startsWith('https:')
+    ? require('https').get(url, { rejectUnauthorized: false }, onResponse)
+    : http.get(url, onResponse);
+  req.on('close', () => clearTimeout(deadline));
+  return req;
+}
+
 const CLI = detectCli();
 // Ensure common binary locations are on PATH when spawning child processes
-const EXEC_ENV = Object.assign({}, process.env, { PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:' + (process.env.HOME || '') + '/.local/bin' });
+// Defense in depth: the AI CLI acts on annotation text from the page, so the Nova Act key
+// is not put in its environment; only the verification script (VERIFY_ENV) gets it. This
+// does not make the key unreachable: an auto-apply CLI can still read config files that
+// hold it or edit the verification script.
+const VERIFY_ENV = Object.assign({}, process.env, { PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:' + (process.env.HOME || '') + '/.local/bin' });
+const EXEC_ENV = Object.assign({}, VERIFY_ENV);
+delete EXEC_ENV.NOVA_ACT_API_KEY;
 
 process.stderr.write(`[agent-bridge] Using CLI: ${CLI}\n`);
 
@@ -151,29 +208,6 @@ function renderMarkdown(md) {
   return marked.parse(md);
 }
 
-// Only reflect the caller's Origin back when it's a localhost page — this blocks
-// drive-by cross-origin requests from arbitrary websites while still letting the
-// browser extension (whose content-script origin is the local dev app) call us.
-function allowedOrigin(req) {
-  const origin = req.headers && req.headers.origin;
-  if (!origin) return null;
-  try {
-    const u = new URL(origin);
-    if ((u.protocol === 'http:' || u.protocol === 'https:') &&
-        (u.hostname === 'localhost' || u.hostname === '127.0.0.1')) {
-      return origin;
-    }
-  } catch (_) {}
-  return null;
-}
-
-function corsHeaders(req, extra) {
-  const h = Object.assign({}, extra || {});
-  const o = allowedOrigin(req);
-  if (o) { h['Access-Control-Allow-Origin'] = o; h['Vary'] = 'Origin'; }
-  return h;
-}
-
 // ─── HTTP Server ───────────────────────────────────────────────────────────────
 // API Endpoints:
 //   POST   /api/feedback       — Store a single annotation from the browser extension
@@ -188,6 +222,16 @@ const server = http.createServer((req, res) => {
   // Don't log status polls — they fire every 3s and spam the terminal
   if (req.url !== '/api/apply/status') {
     log('req', `${req.method} ${req.url}`);
+  }
+
+  // Refuse forged requests (foreign Host/Origin, non-JSON bodies) before any route runs.
+  // See request-guard.js for why CORS alone is not enough.
+  const rejection = checkRequest(req, port, ['/api/apply', '/api/chat', '/api/feedback']);
+  if (rejection) {
+    log('guard', `Rejected ${req.method} ${req.url}: ${rejection.reason}`);
+    res.writeHead(rejection.status, corsHeaders(req, { 'Content-Type': 'application/json' }));
+    res.end(JSON.stringify({ error: rejection.reason }));
+    return;
   }
 
   // Handle CORS preflight requests so the browser extension can call us cross-origin
@@ -391,7 +435,12 @@ const server = http.createServer((req, res) => {
             'summary{cursor:pointer;font-weight:600}</style></head><body>' +
             renderMarkdown(content) +
             '</body></html>';
-          res.writeHead(200, corsHeaders(req, { 'Content-Type': 'text/html; charset=utf-8' }));
+          // The report is rendered Markdown that can quote app/DOM text. Forbid scripts so
+          // nothing in it can run on this origin and call /api/apply past the request guard.
+          res.writeHead(200, corsHeaders(req, {
+            'Content-Type': 'text/html; charset=utf-8',
+            'Content-Security-Policy': "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; form-action 'none'; base-uri 'none'; frame-ancestors 'none'",
+          }));
           res.end(html);
           return;
         }
@@ -505,23 +554,14 @@ const server = http.createServer((req, res) => {
             // After successful code edit, poll the dev server until it's responsive
             // (the code changes may have triggered a rebuild/hot-reload)
             log('apply', 'CLI finished successfully. Checking dev server...');
-            let appUrl = 'http://localhost:5173';
-            if (payload.url) {
-              try {
-                const u = new URL(payload.url);
-                if (u.protocol === 'http:' && (u.hostname === 'localhost' || u.hostname === '127.0.0.1')) {
-                  appUrl = u.toString();
-                } else {
-                  log('apply', `Rejecting non-localhost url: ${payload.url}`);
-                }
-              } catch (_) {
-                log('apply', `Rejecting malformed url: ${payload.url}`);
-              }
+            const appUrl = safeLocalUrl(payload.url, 'http://localhost:5173');
+            if (payload.url && !safeLocalUrl(payload.url, null)) {
+              log('apply', `Rejecting non-localhost url: ${payload.url}`);
             }
             var attempts = 0;
             function checkServer() {
               attempts++;
-              http.get(appUrl, function (r) {
+              getDevServer(appUrl, function (r) {
                 r.resume();
                 if (r.statusCode >= 200 && r.statusCode < 500) {
                   log('apply', `Dev server responding (status ${r.statusCode}, attempt ${attempts})`);
@@ -551,7 +591,6 @@ const server = http.createServer((req, res) => {
               fs.writeFileSync(statusFile, JSON.stringify({ status: 'verifying', sessionId: sessionId, timestamp: Date.now() }));
 
               const verifyScript = path.join(__dirname, 'verify-with-nova-act.py');
-              const verifyEnv = Object.assign({}, EXEC_ENV, { NOVA_ACT_API_KEY: process.env.NOVA_ACT_API_KEY || '4319cc3b-8831-4c0a-82a9-1df7794af3d5' });
               // Use venv python if available, otherwise system python3
               const venvPython = path.resolve(execCwd, '..', '.venv', 'bin', 'python3');
               const pythonBin = fs.existsSync(venvPython) ? venvPython : 'python3';
@@ -559,7 +598,7 @@ const server = http.createServer((req, res) => {
               const verifyArgs = [verifyScript, '--app-dir', absAppDir, '--url', appUrl];
               log('apply', `Verify command: ${pythonBin} ${verifyArgs.join(' ')}`);
               const { execFile } = require('child_process');
-              execFile(pythonBin, verifyArgs, { timeout: 300000, cwd: absAppDir, env: verifyEnv }, function (err2, stdout2, stderr2) {
+              execFile(pythonBin, verifyArgs, { timeout: 300000, cwd: absAppDir, env: VERIFY_ENV }, function (err2, stdout2, stderr2) {
                 if (err2) {
                   var errMsg = (stderr2 || err2.message || '').replace(/\x1B\[[0-9;]*m/g, '').trim().slice(-500);
                   log('apply', `Verification FAILED: ${errMsg}`);
@@ -609,6 +648,7 @@ const server = http.createServer((req, res) => {
 
 // Start the server and signal readiness to the parent process via stdout
 server.listen(port, '127.0.0.1', () => {
+  log('guard', `Accepting requests from: ${listAllowedOrigins().join(', ')} (change with --allow-origin)`);
   process.stderr.write(`[agent-bridge] Listening on http://localhost:${port}\n`);
   process.stderr.write(`[agent-bridge] App dir: ${appDir || process.cwd()}\n`);
   process.stdout.write(`READY\n`);

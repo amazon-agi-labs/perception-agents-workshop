@@ -4,6 +4,7 @@
   "private": true,
   "description": "Reverse proxy that listens for completed Bee conversations and surfaces design-related feedback as sidebar cards with Apply/Dismiss actions.",
   "scripts": {
-    "start": "node proxy-worker.js --target http://localhost:5173 --port 9997 --feedback ../../some-podcast-app/.tmp/bee-conv-feedback.json --inspector-script ./inspector.js --app-dir ../../some-podcast-app"
+    "start": "node proxy-worker.js --target http://localhost:5173 --port 9997 --feedback ../../some-podcast-app/.tmp/bee-conv-feedback.json --inspector-script ./inspector.js --app-dir ../../some-podcast-app",
+    "test": "node --test"
   }
 }
